@@ -21,7 +21,7 @@ route formats, and [download_resources()] / [verify_resources()] /
 Useful links:
 \itemize{
   \item \url{https://github.com/HaoRan-Code/scMarkerAgent}
-  \item \doi{10.5281/zenodo.22333284}
+  \item \doi{10.5281/zenodo.22333283}
   \item Report bugs at \url{https://github.com/HaoRan-Code/scMarkerAgent/issues}
 }
 

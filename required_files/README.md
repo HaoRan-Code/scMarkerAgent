@@ -35,10 +35,12 @@ Six files, ~760 MiB, all of them verified by `resource_index.json`.
 
 ## Archive
 
-The bundle is archived at [doi:10.5281/zenodo.22333284](https://doi.org/10.5281/zenodo.22333284)
-as `scmarkeragent-curated.tar.gz`; that is the URL both commands use by default, recorded as
-`archive_url` in `resource_index.json`. To fetch the bundle from a different location, pass the
-URL explicitly:
+The bundle is archived on Zenodo as `scmarkeragent-curated.tar.gz` under the concept DOI
+[doi:10.5281/zenodo.22333283](https://doi.org/10.5281/zenodo.22333283), which always resolves
+to the latest version of the record. Both commands download from the version-pinned file URL
+recorded as `archive_url` in `resource_index.json` (the version whose size and SHA-256 the
+index carries), so the bytes verified on arrival are exactly the bytes the index describes.
+To fetch the bundle from a different location, pass the URL explicitly:
 
 ```bash
 scmarkeragent download-resources --dest ~/res --url https://example.org/bundle.tar.gz

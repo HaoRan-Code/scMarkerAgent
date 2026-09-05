@@ -38,7 +38,7 @@ dependencies = [
 Homepage = "https://github.com/HaoRan-Code/scMarkerAgent"
 Repository = "https://github.com/HaoRan-Code/scMarkerAgent"
 "Bug Tracker" = "https://github.com/HaoRan-Code/scMarkerAgent/issues"
-Archive = "https://doi.org/10.5281/zenodo.22333284"
+Archive = "https://doi.org/10.5281/zenodo.22333283"
 
 [project.optional-dependencies]
 test = ["pytest>=8,<10"]
