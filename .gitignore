@@ -1,0 +1,39 @@
+# The curated marker resource. Hundreds of megabytes, distributed through the archive
+# named in required_files/README.md rather than through git. The directory itself, its
+# README, the checksum index and the bundle manifest are tracked; the data files are not.
+required_files/*
+!required_files/README.md
+!required_files/resource_index.json
+!required_files/resource_manifest.json
+
+# Internal task-management document; carries workspace-absolute paths and must never
+# reach the published repository.
+UPDATE.md
+
+# Run outputs
+.scmarkeragent/
+results/
+*_results.zip
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.venv/
+venv/
+
+# R
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+*.Rcheck/
+*.tar.gz
+
+# Editors and OS
+.DS_Store
+.idea/
+.vscode/

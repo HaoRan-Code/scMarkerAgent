@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>__SCMA_TAG__ — scMarkerAgent</title>
+<style>__SCMA_CSS__</style>
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner">
+  <div class="brand">scMarkerAgent</div>
+  <div class="contract">Reference-free production result · one dataset</div>
+</div></header>
+<main>
+  <h1>__SCMA_TAG__</h1>
+  <p class="lead">Marker-grounded cluster annotations with measured, LLM-validated,
+  source-backed cell-type identity markers.</p>
+  <div class="notice"><strong>Reference-free production output.</strong>
+  No author annotation, purity, reference metric, or secondary label is read or displayed.</div>
+  <div class="cards">
+    <div class="card"><div class="metric-label">Cells</div><div class="metric-value">__SCMA_TOTAL_CELLS__</div><div class="metric-note">after production QC</div></div>
+    <div class="card"><div class="metric-label">Clusters</div><div class="metric-value">__SCMA_N_CLUSTERS__</div><div class="metric-note">one reported annotation per cluster</div></div>
+    <div class="card"><div class="metric-label">Identity markers</div><div class="metric-value">__SCMA_N_MARKERS__</div><div class="metric-note">LLM-validated and DB-cited</div></div>
+  </div>
+  <div class="downloads">
+    <a class="button" href="downloads/cluster_summary.csv">Cluster summary</a>
+    <a class="button" href="downloads/marker_evidence.csv">Identity marker evidence</a>
+    <a class="button" href="downloads/markers_all_by_cluster.csv">All markers per cluster</a>
+    <a class="button" href="downloads/markers_significant_by_cluster.csv">Significant markers per cluster</a>
+    <a class="button" href="downloads/cluster_evidence.jsonl">Structured evidence</a>
+  </div>
+  <section class="panel"><h2>Figures</h2><div class="tabs">__SCMA_FIGURE_TABS__</div>
+    <div class="figure-stage">__SCMA_FIGURE_IMAGES__</div>
+  </section>
+  <section class="panel"><h2>Cluster explorer</h2>
+    <div class="toolbar">
+      <input id="cluster-search" type="search" placeholder="Search cluster, annotation, or marker">
+      <select id="resolution-filter">__SCMA_RESOLUTION_OPTIONS__</select>
+      <span id="cluster-count" class="count"></span>
+    </div>
+    <div class="table-wrap"><table><thead><tr>
+      <th class="num"><button data-sort="cluster_id">Cluster</button></th>
+      <th class="num"><button data-sort="n_cells">Cells</button></th>
+      <th><button data-sort="cell_type_annotation">Cell type</button></th>
+      <th><button data-sort="cell_subtype_annotation">Cell subtype</button></th>
+      <th><button data-sort="cell_ontology">Cell Ontology</button></th>
+      <th><button data-sort="annotation_confidence">Confidence</button></th>
+      <th><button data-sort="resolution_status">Resolution</button></th>
+      <th><button data-sort="annotation_source">Decided by</button></th>
+    </tr></thead><tbody id="cluster-body"></tbody></table></div>
+  </section>
+  <section id="cluster-detail" class="panel detail"><div class="empty">Select a cluster.</div></section>
+  <p class="footer">Confidence is the high / medium / low judgement the annotating agent made
+  from the supplied evidence. Every retrieved candidate, its independent review, and the three
+  relative scores behind the retrieval order are kept in the structured evidence file. The
+  Cell Ontology column is displayed as curated and is never used to decide, merge or rank an
+  annotation; N/A means the curated free-text cell type carries no ontology id.</p>
+</main>
+<script id="result-data" type="application/json">__SCMA_DATA__</script>
+<script>__SCMA_JS__</script>
+</body>
+</html>

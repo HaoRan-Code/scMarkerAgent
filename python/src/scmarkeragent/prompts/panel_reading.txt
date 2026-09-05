@@ -1,0 +1,18 @@
+[R1] A marker is RAISED here when `avg_log2FC > 0`. Nothing else is a raise.
+
+[R2] An unraised marker means one of two different things, and `pct_in` tells them
+apart. Unraised with `pct_in` near zero is evidence AGAINST the identity: the cells do
+not express what the resource says defines it. Unraised with a high `pct_in` and a
+similarly high `pct_out` is not evidence against it; a cell type that makes up much of
+the dataset drives its own defining markers to a flat fold change, because the
+comparison is against the rest of the same tissue.
+
+[R3] Publication counts order the reading of ONE identity's own panel; they do not rank
+identities against each other. Within a panel, weigh the markers with the most
+publications first. A high-`n_pub` marker sitting near zero outweighs a low-`n_pub` gene
+with a wide contrast, because the second gene may be incidental to this identity while
+the first is what defines it. One configuration reverses this: where an identity's single
+best-published marker is undetected while several of its next-best are raised together,
+the publication counts are describing the broader lineage the identity belongs to rather
+than the identity itself, and the absent gene does not on its own refute it. Settle that
+configuration on the sources for the absent gene.

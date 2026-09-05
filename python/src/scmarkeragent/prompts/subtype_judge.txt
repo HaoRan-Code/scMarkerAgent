@@ -1,0 +1,120 @@
+# Subtype Quality Control
+
+# Task
+
+One cluster has been annotated at two levels: a parent identity and a finer name within
+it. Decide the single question of whether the FINER name is separable from the parent by
+these measurements. You are not choosing the cluster's identity and you are not ranking
+candidates; the parent is not under test here.
+
+You may ask for more evidence before you answer. Every turn, return exactly one minified
+JSON object and nothing else: either a `query` for evidence, or the verdict. Never both.
+
+# Evidence
+
+`label_under_test` is the finer name and `parent_label` the parent it was reported under.
+`panel` is the finer name's WHOLE curated definition as measured here, ordered by
+publication support, together with the curated negative markers this cluster detects. It
+is NOT filtered to the genes the cluster raises, so a defining marker of the finer name
+that is absent here is visible as such. `parent_panel` is the same for the parent.
+Per row, `polarity` is how the resource curates the gene for that identity, positive or
+negative. `pct_in` is the percentage of this cluster's cells with detected expression and
+`pct_out` the percentage outside it, both 0-100. `avg_log2FC` is the one-versus-rest log2
+fold change and `significant` whether it clears the pipeline's gate. `n_pub` is how many
+publications the curated resource holds for that gene as a marker of that identity, and
+`specificity` runs 0 to 1 for how few of this context's cell types claim the gene at all.
+
+`raised_and_absent_from_parent_panel` lists the genes this cluster raises for the finer
+name that the parent's whole curated definition does not contain. `sources` gives the
+curated publication sentences behind the panel's best-published genes and behind every
+detected negative marker, keyed by gene. It does NOT cover the whole panel: sentences for
+any other panel gene are there to be asked for, and a row whose sentence you have not read
+is a row you have not finished reading.
+
+`unmeasured_curated_genes` counts curated positive markers this dataset never measured.
+They are neither evidence for the finer name nor against it: a panel is thin because of
+what was sequenced, not because the identity was refuted.
+
+Nothing else is supplied, and nothing else may be used. Judge from these rows and these
+sentences, not from what you separately know about the identity, and not from which name
+sounds more precise.
+
+# Asking for more evidence
+
+Return `{"action":"query","tool":"<name>","args":{...}}` to call one of exactly these
+tools. The result is appended and you answer again. Two queries at most, then the verdict.
+
+- `sources` -- args `{"label":"<the finer name or the parent>","genes":["GENE",...]}`.
+  The curated publication sentences tying those genes to that label. Ask where separability
+  turns on what the literature makes of a panel gene whose sentence is not on the page --
+  which is exactly what [J3] weighs a separating gene by. The sentences shipped with the
+  panel are a few of however many exist, not the strongest few; asking again for the same
+  gene returns the ones you have not read, and `not_yet_shown` says which genes still
+  have more.
+- `gene_across_clusters` -- args `{"gene":"GENE"}`. That gene's `pct_in` and `pct_out` in
+  EVERY cluster of the dataset. Ask where a separating marker might be a program shared
+  across the tissue rather than evidence about these cells.
+
+Only these two labels can be asked about. There is no tool that names a third identity,
+because which identity fits better is not the question you were asked.
+
+# Reading the panel
+
+{{PANEL_READING}}
+
+# Rules
+
+[J1] Check the direction before anything else. A refinement has to denote a SUBSET of
+the parent: the cells it names must be some of the parent's cells and not others. A name
+that re-describes the same population on a different axis -- a function it performs, a
+programme it is running, or a broader class the parent already belongs to -- is not a
+refinement of it, however many markers of its own it raises. Where the parent is the more
+specific of the two, or where neither contains the other, the answer is `not_separable`
+and the reason says which way round they are. Only if the direction holds does the rest
+of this apply.
+
+[J2] A finer name is separable only where the cluster raises AT LEAST TWO markers that
+belong to the finer identity's definition and NOT to the parent's. A gene curated for
+both is the parent's own program read under a narrower label, however wide its contrast.
+
+[J3] Weigh a separating gene by what the sentences make of it. A gene the literature
+uses to define the finer identity separates it; a gene appearing only as a control, as a
+comparison in one analysis, or as a marker of a different state of the same lineage does
+not, whatever its detection.
+
+[J4] Activation, inflammation, stress, maturation, proliferation and cell-cycle programs
+are states. A state is not a finer cell type, however cleanly it is raised.
+
+[J5] A finer name is contradicted where the panel's detected negative markers, read
+against their sentences, exclude it. An excluding gene is weighed by [R3] and read by
+[J3] exactly as a separating gene is, and what it settles follows from that weighing --
+where it is corroborated far less than the finer name's own defining markers and those
+are raised, it is a doubt to report and not a verdict to reach. This weighing is about
+the excluding gene only; it does not reach [J1] or [J4].
+
+[J6] Judge only what is asked. Where the cluster's raised evidence belongs predominantly
+to the parent while the finer name rests on a small minority of it, or where the evidence
+leaves the finer name neither established nor excluded, it is not separable: the parent
+is the level these measurements reach.
+
+# Answering
+
+Query turn:
+
+`{"action":"query","tool":"sources|gene_across_clusters","args":{}}`
+
+Verdict turn:
+
+`{"verdict":"separable|not_separable|contradicted","decisive_markers":["GENE"],
+"conflicting_markers":["GENE"],"reason":"<one or two sentences>"}`
+
+`decisive_markers` are the genes from `panel` that carry the finer name, empty where none
+do. `conflicting_markers` are the genes pointing away from it. `reason` names the genes
+and what the sentences make of them; it is read by the annotator, so say what the
+evidence does and does not reach, not what the answer should be.
+
+Invent no gene, number or identity.
+
+# Input
+
+{{EVIDENCE_PACKET_JSON}}

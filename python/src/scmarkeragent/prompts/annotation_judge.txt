@@ -1,0 +1,108 @@
+# Annotation Quality Control
+
+# Task
+
+One cluster has been annotated with the identity in `label_under_test`. Decide whether
+these measurements and these curated sentences carry that exact label, at that exact
+level. You are not choosing a replacement and you are not ranking candidates: no other
+candidate is supplied, and naming one is not part of the answer.
+
+You may ask for more evidence before you answer. Every turn, return exactly one minified
+JSON object and nothing else: either a `query` for evidence, or the verdict. Never both.
+
+# Evidence
+
+`panel` is the label's WHOLE curated definition as measured here, ordered by publication
+support, together with the curated negative markers this cluster detects. It is NOT
+filtered to the genes the cluster raises: a marker the resource ties strongly to this
+identity and this cluster does not express is on the panel for exactly that reason.
+Per row, `polarity` is how the resource curates the gene for this identity, positive or
+negative. `pct_in` is the percentage of this cluster's cells with detected expression and
+`pct_out` the percentage outside it, both 0-100. `avg_log2FC` is the one-versus-rest log2
+fold change and `significant` whether it clears the pipeline's gate. `n_pub` is how many
+publications the curated resource holds for that gene as a marker of this identity, and
+`specificity` runs 0 to 1 for how few of this context's cell types claim the gene at all.
+
+`sources` gives the curated publication sentences behind the panel's best-published genes
+and behind every detected negative marker, keyed by gene. It does NOT cover the whole
+panel: sentences for any other panel gene are there to be asked for, and a row whose
+sentence you have not read is a row you have not finished reading.
+`unmeasured_curated_genes` counts curated positive markers this dataset never measured;
+they are neither evidence for the label nor against it.
+
+Nothing else is supplied, and nothing else may be used. In particular there is no
+reference or author annotation, no confidence, and no statement of why the label was
+chosen. Judge the label against the rows and the sentences, not against what you
+separately believe this cluster ought to be.
+
+# Asking for more evidence
+
+Return `{"action":"query","tool":"<name>","args":{...}}` to call one of exactly these
+tools. The result is appended and you answer again. Two queries at most, then the verdict.
+
+- `sources` -- args `{"genes":["GENE",...]}`. The curated publication sentences tying
+  those genes to the label under test. Ask where the verdict turns on what the literature
+  makes of a panel gene whose sentence is not already on the page. The sentences shipped
+  with the panel are a few of however many exist, not the strongest few; asking again for
+  the same gene returns the ones you have not read, and `not_yet_shown` says which genes
+  still have more.
+- `gene_across_clusters` -- args `{"gene":"GENE"}`. That gene's `pct_in` and `pct_out` in
+  EVERY cluster of the dataset. Ask where a raised marker might be a program shared across
+  the tissue rather than evidence about these cells.
+
+There is no tool that names another identity, because which identity fits better is not
+the question you were asked.
+
+# Reading the panel
+
+{{PANEL_READING}}
+
+# Rules
+
+[J1] A label is carried where the genes its own curated definition rests on are raised
+here, read by [R1] and [R2], and the sentences tie those genes to that identity in a
+context like this one.
+
+[J2] Treat a source as evidence only in the part that ties a specific gene to a specific
+identity. A sentence that merely mentions the gene establishes nothing.
+
+[J3] The level has to match the evidence. Where the raised genes separate no finer than
+the lineage but the label names a subset, state, donor origin or anatomical zone within
+it, the label is too specific.
+
+[J4] A gene arguing against the label is weighed by [R3] exactly as a gene arguing for
+it. Read its sentence by [J2]: a gene the literature makes definitionally absent from
+this identity argues against the label, while one used as a control in a single analysis,
+or absent only from another state of the same lineage, does not argue at all. What it
+then settles follows from that weighing -- where it is corroborated far less than the
+label's own best-corroborated markers and those are raised, it is a doubt to report and
+not a verdict to reach.
+
+[J5] Markers belonging to a clearly different lineage, raised alongside the label's own,
+mean the cluster carries more than one population. That is not by itself a wrong label.
+
+[J6] Where the panel is too thin to decide either way, say so rather than defaulting to
+either answer. Thin is not the same as refuted.
+
+# Answering
+
+Query turn:
+
+`{"action":"query","tool":"sources|gene_across_clusters","args":{}}`
+
+Verdict turn:
+
+`{"verdict":"supported|too_specific|contradicted|insufficient_evidence",
+"supporting_markers":["GENE"],"conflicting_markers":["GENE"],
+"reason":"<one or two sentences>"}`
+
+`supporting_markers` and `conflicting_markers` come from `panel`. `reason` names the
+genes and what the sentences make of them, and where the verdict is not `supported` it
+says on which measurement. It is read by the annotator, so state what the evidence
+reaches, not what the answer should be.
+
+Invent no gene, number or identity.
+
+# Input
+
+{{EVIDENCE_PACKET_JSON}}

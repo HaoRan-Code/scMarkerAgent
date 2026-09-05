@@ -1,0 +1,54 @@
+# Marker resource
+
+The curated marker resource scMarkerAgent annotates against. It is **required** — neither
+package ships a marker database — and it is too large for git, so it lives in the archive
+below and this directory is empty in a fresh clone.
+
+## Download
+
+```bash
+scmarkeragent download-resources --dest ~/scmarkeragent-resources
+```
+
+```r
+scmarkeragent::download_resources("~/scmarkeragent-resources")
+```
+
+Both read `resource_index.json` in this directory and verify every file's SHA-256 after
+download. A partial or corrupted download therefore fails loudly instead of producing an
+annotation against half a database.
+
+To install it by hand, download the archive, unpack it anywhere, and pass that directory
+as `--resource-dir` (Python) or `resource_dir =` (R).
+
+## Contents
+
+| File | Size | What it is |
+| --- | ---: | --- |
+| `scmarkeragent_curated_sources.csv` | 612 MiB | The source sentence behind every marker record, with PMID/PMCID — row-for-row 1:1 with the marker table. This is what makes a call checkable |
+| `scmarkeragent_curated_markers.csv` | 136 MiB | Curated marker–cell-type pairs with polarity, publication support and evidence tier |
+| `ontology/uberon-basic.obo` | ~11 MiB | Tissue context resolution |
+| `ortholog/ortho_Human_to_*.csv` | 419 KiB | Cross-species marker pooling |
+| `resource_manifest.json` | 2 KiB | Size, checksum and licence of every file above |
+
+Six files, ~760 MiB, all of them verified by `resource_index.json`.
+
+## Archive
+
+The archive DOI is minted at publication and back-filled here. To fetch the bundle from a
+different location, pass the URL explicitly:
+
+```bash
+scmarkeragent download-resources --dest ~/res --url https://example.org/bundle.tar.gz
+```
+
+```r
+scmarkeragent::download_resources("~/res", url = "https://example.org/bundle.tar.gz")
+```
+
+## Licence
+
+Noncommercial use only (CC BY-NC 4.0). The source sentences are quoted from PubMed
+Central open-access articles and every row carries its PMCID/PMID. The ontology and
+ortholog files keep their own third-party terms, recorded per file in
+`resource_manifest.json`.

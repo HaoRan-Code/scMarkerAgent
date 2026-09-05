@@ -1,0 +1,24 @@
+{
+  "schema_version": "r-production-dependencies-v1",
+  "r_version": "4.5.2",
+  "packages": {
+    "Seurat": "5.5.0",
+    "SeuratObject": "5.4.0",
+    "data.table": "1.18.4",
+    "Matrix": "1.7-4",
+    "presto": "1.0.0",
+    "BiocNeighbors": "2.2.0",
+    "jsonlite": "2.0.0",
+    "curl": "7.1.0",
+    "digest": "0.6.39",
+    "igraph": "2.2.2",
+    "ggplot2": "4.0.3",
+    "ggrastr": "1.0.2",
+    "scales": "1.4.0",
+    "png": "0.1-9",
+    "zip": "3.0.0"
+  },
+  "restore_notes": {
+    "presto": "The validated installation does not expose an upstream commit hash. Set SCMA_PRESTO_SOURCE to an audited local source tree when restoring renv.lock; the package's DESCRIPTION pins immunogenomics/presto@a24772a135c7895a8183b007376050556c60a05b for installation."
+  }
+}

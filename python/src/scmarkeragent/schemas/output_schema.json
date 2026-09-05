@@ -1,0 +1,129 @@
+{
+  "schema_version": "scmarkeragent-output-v1",
+  "not_applicable_token": "N/A",
+  "cluster_summary": {
+    "columns": [
+      "dataset",
+      "cluster_id",
+      "n_cells",
+      "primary_annotation",
+      "cell_type_annotation",
+      "cell_subtype_annotation",
+      "cell_state",
+      "cell_ontology",
+      "annotation_confidence",
+      "annotation_rationale",
+      "resolution_status",
+      "annotation_source",
+      "llm_status",
+      "annotation_qc",
+      "key_markers",
+      "pmcid",
+      "cooccurring_markers",
+      "cooccurring_pmcid",
+      "alternative_candidates",
+      "claim_warnings",
+      "unlisted_identity"
+    ],
+    "required": [
+      "dataset",
+      "cluster_id",
+      "n_cells",
+      "primary_annotation",
+      "cell_type_annotation",
+      "cell_subtype_annotation",
+      "cell_ontology",
+      "annotation_confidence",
+      "annotation_rationale",
+      "resolution_status",
+      "annotation_source",
+      "llm_status"
+    ],
+    "fields": {
+      "primary_annotation": "The one label to read, plot and score against: cell_subtype_annotation where the evidence established a finer cell type, otherwise cell_type_annotation. Derived in code from those two columns, never typed by a model.",
+      "cell_state": "What the assigned cells are doing, where the evidence describes a state rather than a type -- activation, inflammation, stress, maturation, proliferation, injury response -- or N/A. Kept out of the identity columns so a state can never stand in for a cell type.",
+      "cell_type_annotation": "The cell type assigned to the cluster, or Unknown when the evidence establishes no identity. Exactly two kinds of value, so the column can be read without a vocabulary: a curated free-text cell type, or Unknown. A cluster carrying two identities is labelled with the majority one and the others are listed in alternative_candidates.",
+      "cell_subtype_annotation": "The finer identity within the same biological group when its own specific defining marker is expressed here, or N/A. Reported alongside the cell type rather than instead of it, so naming the level the evidence supports never costs the coarser call.",
+      "cell_ontology": "Cell Ontology id the marker resource happens to carry for this exact free-text cell type, or N/A. Displayed only: no ontology relation is read, resolved or compared anywhere in the pipeline.",
+      "annotation_confidence": "high, medium or low as judged by the annotating agent from the supplied evidence, or N/A when no model judgement was made.",
+      "annotation_rationale": "Evidence-anchored explanation naming the decisive markers, why the competing identity was rejected, and why the subtype was or was not reported.",
+      "resolution_status": "resolved, mixed, or unresolved. mixed marks a cluster carrying more than one identity, whose label is the majority one.",
+      "annotation_source": "cluster_annotation, relative_score_fallback, or no_candidate. A fallback label is never presented as a model judgement.",
+      "llm_status": "annotated, disabled, skipped_no_credentials, or a transport failure reason.",
+      "annotation_qc": "How the reported label left quality control, which judges it against its own curated panel and source sentences only. passed: carried on the first answer. passed_after_revision: carried after the verdict was returned to the annotator and it answered again. demoted_to_parent: a finer name was not separable from its parent, and the parent is reported. failed: the rounds ran out with the label still not carried, and the best-rated answer is reported anyway. not_checked: no judge answered, which happens only where no model was reachable at all -- an abstention or a fallback label is not reported this way. The verdicts themselves are in cluster_evidence.jsonl.",
+      "key_markers": "Measured markers behind the assigned identity (is_selected_annotation), each with its in-cluster detection fraction. Capped at twelve, strongest corroboration first; when both a parent and a subtype are assigned, the twelve are fair-shared across those identities so a high-n_pub parent cannot hide the subtype's defining markers. Full panels stay in marker_evidence.csv.",
+      "pmcid": "PubMed Central ids of the curated publications backing exactly the markers listed in key_markers, semicolon-separated and deduplicated, or N/A.",
+      "alternative_candidates": "The other identities the cluster also carries, semicolon-separated, or N/A. Every candidate considered, with its complete measured panel, stays in cluster_evidence.jsonl.",
+      "claim_warnings": "Audit flag, never a correction. One entry per claimed identity whose curated positive markers are not all up-regulated here, giving the unraised count over the measured panel size and naming the best-corroborated unraised genes with their in and out detection percentages. N/A when every claimed identity had its whole panel raised.",
+      "unlisted_identity": "A curated cell type the agent judged the evidence points to that candidate retrieval never offered, or N/A. Reportable but never answerable: it has no supplied panel to quote a measurement from, so it cannot appear in an identity column, and an answer naming a supplied candidate here is rejected. It exists because retrieval hands the agent 15 of a median 67 admitted cell types, and without this column a menu that missed the answer looked identical to a menu that did not.",
+      "cooccurring_markers": "Measured markers behind the identities listed in alternative_candidates, each as gene|identity|fraction (pipe fields; curated names may contain parentheses). Capped at twelve with corroboration order and fair-share across those identities. N/A when alternative_candidates is N/A. Does not include rejected_subtype or other non-selected audit rows. Full panels stay in marker_evidence.csv.",
+      "cooccurring_pmcid": "PubMed Central ids backing exactly the markers listed in cooccurring_markers, semicolon-separated and deduplicated, or N/A."
+    }
+  },
+  "cluster_evidence": {
+    "file": "cluster_evidence.jsonl",
+    "format": "jsonl",
+    "required": [
+      "schema_version",
+      "dataset",
+      "cluster_id",
+      "annotation",
+      "evidence",
+      "audit"
+    ],
+    "fields": {
+      "annotation": "Assigned identity, its displayed ontology id, confidence, resolution status, how the label was produced, and any claim warnings.",
+      "evidence": "Rationale, the markers behind the call, every candidate considered with its complete measured curated panel, and identity_groups: the agent's grouping of the candidate names into distinct identities, since curated names are free text and several routinely denote one identity.",
+      "audit": "Candidate pool size, how many turns the annotating agent took and which evidence tools it called, the full retrieval order with the marker-level, cluster-level and single-cell-level scores behind it, and exclusion_audit: one block for the assigned identity and one for each the cluster also carries, listing the curated negative markers detected against it with their in and out detection percentages. An empty block is a measured absence, not a missing check."
+    }
+  },
+  "marker_evidence": {
+    "columns": [
+      "dataset",
+      "cluster_id",
+      "candidate_annotation",
+      "is_selected_annotation",
+      "gene",
+      "marker_polarity",
+      "marker_role",
+      "marker_provenance",
+      "cluster_detection_fraction",
+      "out_of_cluster_detection_fraction",
+      "average_log2_fold_change",
+      "adjusted_p_value",
+      "cross_cluster_percentile",
+      "marker_specificity_weight",
+      "publication_support_count",
+      "evidence_tier",
+      "pmid",
+      "pmcid",
+      "source_sentence"
+    ],
+    "required": [
+      "dataset",
+      "cluster_id",
+      "candidate_annotation",
+      "is_selected_annotation",
+      "gene",
+      "marker_role",
+      "marker_specificity_weight"
+    ],
+    "fields": {
+      "candidate_annotation": "Identity the marker record belongs to; rows exist for the assigned identity and for every other identity the cluster was found to carry.",
+      "is_selected_annotation": "True on the rows belonging to the identity the cluster was assigned.",
+      "marker_polarity": "positive or negative, as curated.",
+      "marker_role": "What the gene did in the claim: decisive when the agent quoted it for that identity, support when it was named behind the assigned label, panel otherwise.",
+      "marker_provenance": "Curated database provenance; production rows are db_cited.",
+      "cluster_detection_fraction": "Fraction of cluster cells with detected expression.",
+      "out_of_cluster_detection_fraction": "Fraction of cells outside the cluster with detected expression.",
+      "average_log2_fold_change": "One-versus-rest average log2 fold change, from de-log1p normalized expression means with pseudocount 1.",
+      "adjusted_p_value": "Genome-wide per-cluster Benjamini-Hochberg adjusted p-value.",
+      "cross_cluster_percentile": "Where this cluster ranks among all clusters for the gene; 1.0 means no cluster separates it more strongly.",
+      "marker_specificity_weight": "How few curated cell types in this context claim the gene as a positive marker.",
+      "publication_support_count": "Number of supporting publications in the curated marker resource.",
+      "evidence_tier": "Curated evidence confidence tier.",
+      "pmid": "PubMed id of the displayed source sentence, or N/A.",
+      "pmcid": "PubMed Central id of the displayed source sentence, or N/A."
+    }
+  }
+}

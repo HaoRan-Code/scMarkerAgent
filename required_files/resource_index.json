@@ -1,0 +1,32 @@
+{
+  "schema_version": "scmarkeragent-resource-index-v1",
+  "bundle": "scmarkeragent-curated",
+  "total_bytes": 796492053,
+  "file_count": 6,
+  "files": {
+    "ontology/uberon-basic.obo": {
+      "bytes": 11940815,
+      "sha256": "9cb9db511e9d1d1d411902084eda676bdb6750f3e3009999cab30fe13836a452"
+    },
+    "ortholog/ortho_Human_to_Mouse.csv": {
+      "bytes": 215948,
+      "sha256": "9c058e46d622d2295d0c26d5e9ffe7bc455740c5d3b9f56938e676d7c7b4e554"
+    },
+    "ortholog/ortho_Human_to_Rat.csv": {
+      "bytes": 213227,
+      "sha256": "07a57b450c190337340f3dcdc536acbe512f980fb297aaca2968e0a06d42d66c"
+    },
+    "resource_manifest.json": {
+      "bytes": 1459,
+      "sha256": "dbaaf2f41a166c53760ba75e00db0440cb9ed677c66d5791814a980511130ce4"
+    },
+    "scmarkeragent_curated_markers.csv": {
+      "bytes": 142285053,
+      "sha256": "bf1ddd5f87e4f51f121c17b48bc5058e4ff5fe8f2ed37ac87db94a5e141dfe42"
+    },
+    "scmarkeragent_curated_sources.csv": {
+      "bytes": 641835551,
+      "sha256": "46b6ff7c1cf7be5ea6ea96c203c36b542fc4f2f7eac4a586e68ca1717d9d744f"
+    }
+  }
+}

@@ -1,0 +1,172 @@
+# Cluster Annotation
+
+# Task
+
+Assign one annotation to ONE cluster of cells. You may gather more evidence before you
+answer. Every turn, return exactly one minified JSON object and nothing else: either a
+`query` that asks for evidence, or the `final` answer. Never return both.
+
+# Evidence you already have
+
+`candidates` are the curated cell types retrieved for this cluster. For each one,
+`markers` is its COMPLETE curated panel as measured in this dataset, ordered by `n_pub`,
+the number of publications the curated resource holds for that gene as a marker of that
+cell type. The best-corroborated markers of the identity are therefore at the top of
+each list, whatever the cluster does with them.
+
+Per marker row: `polarity` is how the resource curates the gene for this identity,
+positive or negative. `pct_in` is the percentage of this cluster's cells with detected
+expression and `pct_out` the percentage outside it, both on a 0-100 scale.
+`avg_log2FC` is the one-versus-rest log2 fold change. `significant` is whether that fold
+change clears this pipeline's own significance gate, which also requires the gene to be
+detected in more than 10% of the cluster at an adjusted p below 0.05; a row can therefore
+be raised without being significant. `specificity` runs 0 to 1 and says how few of this
+context's cell types claim the gene as a marker at all: near 1 it is claimed by almost
+none of them, low it is shared widely. It is not the same axis as `n_pub`.
+
+`exclusion_sources` holds the curated publication sentences behind each negative marker
+this cluster detects, keyed by gene. It is empty for a candidate whose negative markers
+are undetected, and empty for a detected one the resource carries no sentence for.
+
+`unmeasured_curated_genes` counts the identity's curated positive markers this dataset
+did not measure; they are neither evidence for it nor against it. `program` gives the
+median of the candidate's per-cell marker program inside and outside the cluster.
+
+`cluster_markers` is the same measurements keyed the other way round: one row per gene
+this cluster raises significantly, ordered by the contrast between `pct_in` and
+`pct_out`, widest first, and `claimed_by` names EVERY candidate above that curates the
+gene together with its `n_pub` for it. A candidate's panel shows one claimant of a gene;
+this shows all of them, so how widely a gene is shared is visible on the row where it is
+read. It carries the strongest rows only and adds nothing: every row is already in some
+candidate's panel, and the panels remain the complete record of each identity.
+
+No reference label, ground truth or author annotation is supplied. Numbers come from the
+differential-expression table, so they are comparable across candidates.
+
+# Reading the panels
+
+[R1] A marker is RAISED here when `avg_log2FC > 0`. Nothing else is a raise.
+
+[R2] An unraised marker means one of two different things, and `pct_in` tells them
+apart. Unraised with `pct_in` near zero is evidence AGAINST the identity: the cells do
+not express what the resource says defines it. Unraised with a high `pct_in` and a
+similarly high `pct_out` is not evidence against it; a cell type that makes up much of
+the dataset drives its own defining markers to a flat fold change, because the
+comparison is against the rest of the same tissue.
+
+[R3] Publication counts order the reading of ONE identity's own panel; they do not rank
+identities against each other. Within a panel, weigh the markers with the most
+publications first. A high-`n_pub` marker sitting near zero outweighs a low-`n_pub` gene
+with a wide contrast, because the second gene may be incidental to this identity while
+the first is what defines it. One configuration reverses this: where an identity's single
+best-published marker is undetected while several of its next-best are raised together,
+the publication counts are describing the broader lineage the identity belongs to rather
+than the identity itself, and the absent gene does not on its own refute it. Settle that
+configuration on the sources for the absent gene.
+
+[R4] Compare identities on the CONTRAST between `pct_in` and `pct_out`, not on `pct_in`
+alone. A gene detected in most cells here and in most cells outside separates nothing.
+`cluster_markers` lays that comparison out directly: whether a gene separates the
+candidates of this cluster is visible on its row, in how many of them claim it.
+
+[R5] Curated names are free text, so several candidates routinely denote ONE identity:
+synonyms, spelling variants, an anatomical or disease qualifier on the same cell, or the
+same cell at a different granularity. Group them before comparing, and treat only
+DIFFERENT identities as competing.
+
+# Asking for more evidence
+
+Return `{"action":"query","tool":"<name>","args":{...}}` to call one of exactly these
+tools. Use no other name. The result is appended and you answer again.
+
+- `sources` -- args `{"candidate":"<exact candidate name>","genes":["GENE",...]}`.
+  The curated publication sentences tying those genes to that cell type in this
+  species, tissue and disease context. Up to twelve genes per call. Beyond the sentences
+  already on the page, ask for them where a claim turns on what the literature
+  establishes, or where you doubt a curated marker applies to this context.
+  A gene's sentences are not ranked best-first: the resource holds one publication count
+  for the whole marker, so what you receive is a few of however many exist. Ask again for
+  the same gene and you receive the NEXT ones, never the ones you have already read.
+  `not_yet_shown` says which genes still have sentences behind them. Ask again where what
+  you have read does not settle the question; a claim left open by three sentences when
+  forty exist is a claim you have not finished checking.
+- `gene_across_clusters` -- args `{"gene":"GENE"}`. That gene's `pct_in` and `pct_out`
+  in EVERY cluster of the dataset. Use it to tell a marker specific to these cells from
+  a program shared with a neighbouring cluster or detected throughout the tissue.
+- `candidates_with_gene` -- args `{"gene":"GENE"}`. Which of THIS cluster's candidates
+  curate that gene, with their `n_pub`. Use it to find who else claims a gene you are
+  about to call decisive.
+- `pool_search` -- args `{"gene":"GENE"}`. The curated cell types claiming that gene that
+  are NOT among your candidates, with their `n_pub`. `candidates` is a retrieved subset of
+  the cell types curated for this context, not all of them, so a gene this cluster raises
+  strongly that none of your candidates explains may belong to an identity you were not
+  offered. Use it to find out. What it returns is not a candidate: it carries no panel,
+  it cannot be `selected`, and it is reported in `unlisted_identity`.
+
+Repeating any other call with identical arguments returns the same observation and tells
+you nothing new; ask something else or answer. `sources` is the exception: repeating it
+draws the sentences you have not seen.
+
+One observation arrives unasked. When the cluster detects a curated exclusion on the
+identity you select or on its group, those rows return once as `exclusion_audit`,
+together with the same rows for every identity you reported as co-occurring, and you
+answer again. An identity listed there with no detected exclusion is a measured absence,
+not a missing measurement. Say in `reason` what each of them means for the identity you
+are selecting, not only for the ones you reject; the answer may stay the same.
+
+# Answering
+
+Return `{"action":"final", ...}` with these fields:
+
+[A1] `selected` is the identity the evidence best supports, named exactly as one of the
+supplied candidates, reported at the FINEST level the evidence establishes. Where the
+evidence separates no finer than a lineage, the plainest lineage-level candidate is the
+answer and that is not a failure. `Unknown` only when no candidate is established at
+all; do not retreat to it because the cluster is mixed.
+
+[A2] `subtype` is a finer CELL TYPE within the same identity group as `selected`, or the
+empty string. Name one only where the cluster raises at least two markers the parent's
+own curated panel does NOT contain; markers curated for both identities are the parent
+read at a narrower name, whatever their contrast, and a subtype resting on those is
+dropped after you answer. `state` is free text for what the cells are doing --
+activation, inflammation, stress, maturation, proliferation, injury response. It is what
+the measurements show these cells DOING, never a label copied from elsewhere: this package
+is reference-free, and a study's own cluster name is the one thing that must not enter the
+output. A state is never a subtype and never replaces `selected`.
+
+[A3] `co_occurring_identities` lists the OTHER identities the cluster also carries, from
+other groups. An identity resting on markers it shares with `selected` is that same
+program read twice, not a second population.
+
+[A4] `claim_evidence` carries one entry for `selected`, one for `subtype` if you gave
+one, and one for EVERY co-occurring identity. Each names a `decisive_gene` from that
+identity's own panel and copies that gene's `pct_in` and `pct_out` exactly as shown.
+A claim you cannot support with a measured gene from its own panel is a claim to drop.
+
+[A5] `identity_groups` places every supplied candidate in exactly one group.
+`support_markers` are genes listed for `selected`. Invent no name, gene or number.
+
+[A6] `reason` states why `selected` is this identity and on which contrast, why the most
+serious competing IDENTITY was rejected and on which measurement, what any unraised
+high-`n_pub` markers of the selected identity mean here by [R2], and what shows a
+co-occurring identity occupies different cells.
+
+[A7] `unlisted_identity` names ONE curated cell type from `pool_search` that the evidence
+here points to better than any supplied candidate does, or the empty string. It is a
+report, not an answer: `selected` is still one of the candidates, and naming a supplied
+candidate here is rejected. Name one only where this cluster raises at least two of that
+cell type's curated markers and no candidate's own definition accounts for them, and say
+in `reason` which genes those are. Leave it empty where a candidate does account for the
+evidence -- a finer or more fashionable name is not a reason to fill it.
+
+# Schema
+
+Query turn:
+
+{"action":"query","tool":"sources|gene_across_clusters|candidates_with_gene|pool_search","args":{}}
+
+Final turn:
+
+{"action":"final","schema_version":"cluster-annotator-v1","selected":"exact_candidate_name|Unknown","subtype":"exact_candidate_name_or_empty_string","state":"free-text cell state or empty string","co_occurring_identities":["exact_candidate_name"],"claim_evidence":[{"identity":"exact_candidate_name","decisive_gene":"listed_gene","pct_in":0.0,"pct_out":0.0}],"identity_groups":[{"identity":"short description of the grouped identity","candidates":["exact_candidate_name"]}],"support_markers":["listed_gene"],"unlisted_identity":"curated_cell_type_not_among_the_candidates_or_empty_string","confidence":"high|medium|low","reason":"the explanation required by [A6]"}
+
+EVIDENCE_PACKET_JSON={{EVIDENCE_PACKET_JSON}}

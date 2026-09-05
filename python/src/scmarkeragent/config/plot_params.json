@@ -1,0 +1,116 @@
+{
+  // =====================================================================
+  //  scMarkerAgent -- figure parameters (single source of truth)
+  // =====================================================================
+  //  rflow/visualization.R reads THIS file when it renders, through the
+  //  validated loader rflow/plot_params.R, so the numbers behind every
+  //  figure live here and not in the renderer.
+  //  HOW TO USE:
+  //     1. edit any value below (keep it valid JSONC: quote strings;
+  //        // line-comments and trailing commas are stripped before parsing);
+  //     2. re-render -- no code change is needed:
+  //          Rscript rflow/reporting.R <tag> <result_dir>
+  //  Any key you delete falls back to the built-in default. A malformed
+  //  value (wrong type or out of range) fails LOUDLY with the offending
+  //  group.key, never silently.
+  //  Defaults below reproduce the approved EvidenCellMarker look.
+  //  Relocate the file with env var SCMA_PLOT_PARAMS=/path/to/plot_params.json
+  // ---------------------------------------------------------------------
+
+  "global": {
+    "formats": ["pdf", "png"],   // output devices written per panel (vector + raster)
+    "dpi": 300,                  // raster dpi for png + every rasterized point layer
+    "font_family": "Arial",      // primary font family
+    "font_fallback": ["Helvetica", "Liberation Sans", "DejaVu Sans"], // used if primary is missing
+    "base_font_size": 8,         // pt; base size (panel title = base+1; axis titles = base)
+    "figure_background": "white",// figure / panel background colour
+    "vector_device": "cairo"     // pdf backend: cairo (grDevices::cairo_pdf)
+  },
+
+  "umap": {
+    "point_size": 0,             // pt; 0 = auto (density-scaled by cell count); >0 = fixed
+    "point_alpha": 1.0,          // point opacity 0..1
+    "rasterize": true,           // rasterize the scatter layer (axis text stays vector)
+    "raster_dpi": 300,           // dpi of the rasterized scatter layer
+    "label_on_data": true,       // draw cluster ids on the cloud (umap_cluster panel only)
+    "label_font_size": 7,        // pt; on-data label size
+    "legend_ncol": 1,            // number of legend columns (legend rendered as its OWN panel)
+    "legend_marker_size": 4,     // pt; diameter of legend key markers
+
+    // ---- consistent-proportions rule (comparability) ------------------------------------
+    // Every UMAP DATA panel is a FIXED-SIZE SQUARE (panel_mm x panel_mm) with equal aspect and
+    // a SHARED data frame, so umap_cluster / umap_celltype / umap_reference (and the same panel
+    // across datasets) are directly comparable. The category legend is drawn as a SEPARATE panel
+    // and stitched to the right (<stem>_labeled.png) so it never resizes the data area.
+    "panel_mm": 55,              // side length (mm) of the SQUARE data area (identical every panel)
+    "margin_left_mm": 8,         // mm reserved for the y axis title/label
+    "margin_right_mm": 3,        // mm reserved on the right of the data panel
+    "margin_bottom_mm": 7,       // mm reserved for the x axis title/label
+    "margin_top_mm": 9,          // mm reserved for the panel title
+    "separate_legend": true,     // also write <stem>_legend + stitched <stem>_labeled.png
+    "palette": "eviden"          // categorical palette source (see "palette" block)
+  },
+
+  "dotplot": {
+    "dot_size_range": [1.0, 55.0], // dot AREA (pt^2) at pct_exp 0% .. 100%; the renderer
+                                   //   converts each area to the ggplot size (a diameter
+                                   //   in mm) that draws a dot of exactly that area.
+    "dot_size_max_cap": 55.0,    // hard clamp on dot AREA (pt^2); no dot is drawn larger than this
+    "dot_stroke": 0.9,           // black outline stroke width of each dot
+    "colorbar_length_mm": 18,    // gradient (fill=avg.exp.scaled) legend length  -- SHORTER = smaller
+    "colorbar_thickness_mm": 3.0,// gradient legend bar thickness
+    "colorbar_orientation": "vertical", // vertical | horizontal
+    "colorbar_position": "right",// right | left | top | bottom  (relative to the panel)
+    "legend_gap_mm": 4,          // minimum mm clearance between DATA AREA and legend column;
+                                 //   also the vertical gap under the colorbar before size keys.
+                                 //   The column is parked in the figure gutter (capped) so it
+                                 //   does not sit flush on the last gene columns while unused
+                                 //   white space sits beyond the legend.
+    "gradient_colors": ["#fee0d2", "#fc9272", "#de2d26"], // 3-stop low->mid->high red gradient
+    "tick_font_size": 6,         // pt; gene (x) and cluster (y) tick label size
+    "x_axis_angle": 90,          // deg; rotation of x (gene) tick labels
+    "panel_grid": true,          // draw faint panel gridlines
+    "panel_grid_alpha": 0.3,     // gridline opacity 0..1
+    "max_genes": 0,              // show every pre-capped cluster marker slot
+
+    // ---- identity-marker dotplot: cluster-aligned block grouping ----------------------
+    // The evidence panels show, per block, the complete panel of curated markers this
+    // cluster raises for the identity it was assigned (marker_evidence.csv), grouped
+    // block-diagonal. Genes are deduplicated across blocks, so the number of columns is a
+    // property of the evidence and is not capped here.
+    "block_gap": 0.9,            // x-axis gap (in gene-slot units) inserted between blocks
+    "block_separator": true,     // draw a faint vertical separator between adjacent blocks
+    "block_separator_alpha": 0.55, // separator line opacity 0..1
+    "show_block_labels": true,   // draw the cell-type label above each contiguous block
+    "block_label_font_size": 5.5,// pt; block (cell-type) label size
+    "block_label_angle": 30,     // deg; rotation of the block labels
+    "block_label_max_chars": 22, // truncate long cell-type block labels ABOVE the x-axis
+                                 //   (y-axis primary labels are never truncated)
+    "legend_dot_fill": "",       // size-legend key fill; "" => midpoint of gradient_colors
+                                 //   (single shape-21 dot: gradient fill + concentric black stroke)
+    "ordering": "bundle",        // gene/cluster order = as precomputed in the shared bundle
+                                 //   (genes by first appearance across clusters; clusters by numeric id)
+    "width_mm_per_gene": 3.4,    // width added per gene (mm)
+    "width_mm_base": 55,         // base width (mm)
+    "width_mm_min": 120,         // minimum panel width (mm)
+    "height_mm_per_cluster": 6.0,// height added per cluster row (mm)
+    "height_mm_base": 32,        // base height (mm)
+    "height_mm_min": 60          // minimum panel height (mm)
+  },
+
+  "palette": {
+    // eviden 25-colour base.
+    "eviden_base": [
+      "#a4cde1", "#67a4cc", "#277fb8", "#549da3", "#96cb8f", "#8bc96d",
+      "#4dae47", "#5c9e43", "#b79973", "#f38989", "#ec5051", "#e32427",
+      "#ef6a45", "#f9b769", "#f9a341", "#f48521", "#ee8e46", "#d4a6a8",
+      "#af93c4", "#8660a8", "#815e99", "#c6b598", "#f6f28f", "#d4a55b",
+      "#b05a28"
+    ],
+    // how the palette extends when n categories exceeds the base: the eviden
+    // base first, then the tab20 / tab20b / tab20c qualitative sets, then
+    // evenly spaced HSV hues. The order is fixed in the renderer, which never
+    // reads this key; it records what the renderer does.
+    "extend": "brewer_hsv"
+  }
+}

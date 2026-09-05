@@ -1,0 +1,36 @@
+{
+  "schema_version": "scmarkeragent-resource-manifest-v1",
+  "resource_version": "scmarkeragent-curated",
+  "files": {
+    "markers": {
+      "path": "scmarkeragent_curated_markers.csv",
+      "size": 142285053,
+      "sha256": "bf1ddd5f87e4f51f121c17b48bc5058e4ff5fe8f2ed37ac87db94a5e141dfe42",
+      "license": "CC BY-NC 4.0"
+    },
+    "sources": {
+      "path": "scmarkeragent_curated_sources.csv",
+      "size": 641835551,
+      "sha256": "46b6ff7c1cf7be5ea6ea96c203c36b542fc4f2f7eac4a586e68ca1717d9d744f",
+      "license": "CC BY-NC 4.0; the verbatim source sentences are quoted from PubMed Central open-access articles and every row carries its PMCID/PMID"
+    },
+    "uberon_ontology": {
+      "path": "ontology/uberon-basic.obo",
+      "size": 11940815,
+      "sha256": "9cb9db511e9d1d1d411902084eda676bdb6750f3e3009999cab30fe13836a452",
+      "license": "CC BY 3.0 (OBO Foundry: Uberon; original notice retained in the file)"
+    },
+    "ortholog_human_mouse": {
+      "path": "ortholog/ortho_Human_to_Mouse.csv",
+      "size": 215948,
+      "sha256": "9c058e46d622d2295d0c26d5e9ffe7bc455740c5d3b9f56938e676d7c7b4e554",
+      "license": "CC0 1.0 (derived from NCBI Orthology.eg.db)"
+    },
+    "ortholog_human_rat": {
+      "path": "ortholog/ortho_Human_to_Rat.csv",
+      "size": 213227,
+      "sha256": "07a57b450c190337340f3dcdc536acbe512f980fb297aaca2968e0a06d42d66c",
+      "license": "CC0 1.0 (derived from NCBI Orthology.eg.db)"
+    }
+  }
+}
