@@ -20,17 +20,19 @@ route formats, and [download_resources()] / [verify_resources()] /
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://github.com/scmarkeragent/scmarkeragent}
-  \item Report bugs at \url{https://github.com/scmarkeragent/scmarkeragent/issues}
+  \item \url{https://github.com/HaoRan-Code/scMarkerAgent}
+  \item \doi{10.5281/zenodo.22333284}
+  \item Report bugs at \url{https://github.com/HaoRan-Code/scMarkerAgent/issues}
 }
 
 }
 \author{
-\strong{Maintainer}: scMarkerAgent contributors \email{scmarkeragent@example.org}
+\strong{Maintainer}: Haoran Chen \email{chenhaoran@stu.njmu.edu.cn}
 
 Authors:
 \itemize{
-  \item scMarkerAgent contributors \email{scmarkeragent@example.org}
+  \item Haoran Chen \email{chenhaoran@stu.njmu.edu.cn}
+  \item Chen Cao \email{caochen@njmu.edu.cn}
 }
 
 }

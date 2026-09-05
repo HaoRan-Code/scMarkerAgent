@@ -9,7 +9,10 @@ description = "Evidence-grounded single-cell cluster annotation with Python and 
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 license = "PolyForm-Noncommercial-1.0.0"
-authors = [{name = "scMarkerAgent contributors"}]
+authors = [
+  {name = "Haoran Chen", email = "chenhaoran@stu.njmu.edu.cn"},
+  {name = "Chen Cao", email = "caochen@njmu.edu.cn"}
+]
 keywords = ["single-cell", "cell-type annotation", "marker evidence", "transcriptomics"]
 classifiers = [
   "Development Status :: 4 - Beta",
@@ -30,6 +33,12 @@ dependencies = [
   "matplotlib==3.10.8",
   "umap-learn==0.5.12"
 ]
+
+[project.urls]
+Homepage = "https://github.com/HaoRan-Code/scMarkerAgent"
+Repository = "https://github.com/HaoRan-Code/scMarkerAgent"
+"Bug Tracker" = "https://github.com/HaoRan-Code/scMarkerAgent/issues"
+Archive = "https://doi.org/10.5281/zenodo.22333284"
 
 [project.optional-dependencies]
 test = ["pytest>=8,<10"]
