@@ -1,6 +1,7 @@
 {
   "schema_version": "scmarkeragent-resource-index-v1",
   "bundle": "scmarkeragent-curated",
+  "archive_url": "https://zenodo.org/records/22333284/files/scmarkeragent-curated.tar.gz?download=1",
   "total_bytes": 796492053,
   "file_count": 6,
   "files": {
