@@ -63,39 +63,37 @@ pip install ./python
 scmarkeragent --help
 ```
 
-**R arm, for Seurat `.rds`** (R 4.2 or later, Seurat 5), from the repository root:
+**R arm, for Seurat `.rds`** (R 4.2 or later). The package is served from its own
+CRAN-like repository on R-universe, so one `install.packages()` brings in Seurat, `presto`
+(the differential-expression engine, which is not on CRAN) and everything else, as
+prebuilt binaries on Windows and macOS. No clone is needed for this step:
 
 ```r
-install.packages("remotes")
-remotes::install_git("https://github.com/immunogenomics/presto.git",      # the DE engine; not on CRAN
-                     ref = "a24772a135c7895a8183b007376050556c60a05b")
-remotes::install_local("R", dependencies = TRUE)                         # Seurat and everything else
+options(repos = c(scmarkeragent = "https://haoran-code.r-universe.dev",
+                  CRAN = "https://cloud.r-project.org"))
+install.packages("scmarkeragent")
 library(scmarkeragent)
 ```
 
-`presto` is installed first, by itself, because it is not on CRAN: the line clones it over
-the git protocol at the commit the release was validated with. `dependencies = TRUE` then
-pulls in Seurat and the other runtime packages from CRAN. Neither step uses the GitHub
-API, whose anonymous quota (60 calls per hour per IP address) is what makes
-`remotes::install_github()` fail with `HTTP error 403` behind shared addresses. If you
-forget `presto`, `annotate()` stops before running and prints that same line.
+Put the `options()` line in your `~/.Rprofile` to make it permanent. To install from a
+clone instead (for example after editing the code), set the same `options()` and run
+`remotes::install_local("R", dependencies = TRUE)` from the repository root; `presto` is
+then resolved from the same repository.
 
-If a CRAN package fails to compile, the cause is almost always a missing system library;
-the message names it (for example `libxml2`, `libcurl`, `libpng`, `hdf5`). Install that
-library with your system's package manager and rerun the command.
+Nothing here touches the GitHub API, whose anonymous quota (60 calls per hour per IP
+address) is what makes `remotes::install_github()` fail with `HTTP error 403` behind
+shared addresses. If R-universe itself is unreachable, `presto` can be cloned over the git
+protocol at the commit the release was validated with:
+`remotes::install_git("https://github.com/immunogenomics/presto.git", ref = "a24772a135c7895a8183b007376050556c60a05b")`.
+If a CRAN package fails to compile from source, the cause is almost always a missing
+system library; the message names it (`libxml2`, `libcurl`, `libpng`, ...). Install it with
+your system's package manager and rerun.
 
 <details>
-<summary>Install without cloning</summary>
+<summary>Python arm without cloning</summary>
 
 ```bash
 pip install "git+https://github.com/HaoRan-Code/scMarkerAgent.git#subdirectory=python"
-```
-
-```r
-remotes::install_git("https://github.com/immunogenomics/presto.git",
-                     ref = "a24772a135c7895a8183b007376050556c60a05b")
-remotes::install_git("https://github.com/HaoRan-Code/scMarkerAgent.git",
-                     subdir = "R", dependencies = TRUE)
 ```
 
 </details>

@@ -84,16 +84,23 @@ test_that("the dependency preflight names what is missing, and presto gets the h
     .stop_if_pipeline_dependencies_missing(c(Seurat = FALSE, presto = TRUE)),
     "Seurat"
   )
-  expect_error(
+  hint <- tryCatch(
     .stop_if_pipeline_dependencies_missing(c(Seurat = TRUE, presto = FALSE)),
-    "install_git.*immunogenomics/presto.git.*a24772a135c7895a8183b007376050556c60a05b"
+    error = conditionMessage
   )
+  expect_match(hint, "haoran-code.r-universe.dev", fixed = TRUE)
+  expect_match(hint, "install_git.*immunogenomics/presto.git.*a24772a135c7895a8183b007376050556c60a05b")
 })
 
 test_that("presto is not resolved through the GitHub API", {
   # A Remotes: field makes every remotes::install_* call consult api.github.com, whose
   # anonymous quota is 60 calls per hour per IP address; the install then fails behind a
-  # shared address even when presto is already installed.
+  # shared address even when presto is already installed. presto is served by the
+  # package's R-universe repository instead, declared as an additional repository.
   description <- read.dcf(system.file("DESCRIPTION", package = "scmarkeragent"))
   expect_false("Remotes" %in% colnames(description))
+  expect_match(description[, "Additional_repositories"], "haoran-code.r-universe.dev", fixed = TRUE)
+  imports <- trimws(strsplit(description[, "Imports"], ",")[[1]])
+  expect_true(any(grepl("^presto", imports)))
+  expect_true(any(grepl("^Seurat", imports)))
 })

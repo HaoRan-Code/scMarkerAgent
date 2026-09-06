@@ -8,18 +8,21 @@
 
 ## Everything the packaged pipeline attaches or ::-calls unconditionally, answered
 ## before a run spawns the Rscript that would otherwise die mid-run with a subprocess
-## traceback. Declared Imports are only guaranteed present at install time, and presto
-## is a Suggests because it is not on CRAN, so availability is a runtime question.
-## The guarded optionals (ggrastr, png, zip) are not listed: the pipeline itself
-## degrades without them and records what it skipped.
+## traceback. These are declared Imports, so an install from a repository brings them
+## in; the preflight still exists because the pipeline runs in a fresh Rscript whose
+## library path may differ from the session's, and because a package can be removed
+## after install. The guarded optionals (ggrastr, png, zip) are not listed: the
+## pipeline itself degrades without them and records what it skipped.
 ##
-## presto is deliberately NOT declared in a Remotes: field. remotes resolves that field
-## through the GitHub REST API on every install, even when presto is already present,
-## and anonymous clients get 60 API calls per hour per IP address; behind a shared
-## address the documented install then fails with "API rate limit exceeded". The
-## install command below clones over the git protocol instead, which has no quota, and
-## pins the same commit the released pipeline was validated with.
+## presto is not on CRAN. It is served, at the commit the released pipeline was
+## validated with, by the package's own CRAN-like repository on R-universe, which is
+## what install.packages() resolves it from; the git line is the fallback when that
+## repository cannot be reached. Neither uses the GitHub REST API (anonymous quota:
+## 60 calls per hour per IP address), which is why presto is deliberately NOT declared
+## in a Remotes: field -- remotes consults the API for that field on every install.
 .presto_install_command <- paste0(
+  "install.packages(\"presto\", repos = c(\"https://haoran-code.r-universe.dev\", ",
+  "\"https://cloud.r-project.org\"))\n  or, without that repository: ",
   "remotes::install_git(\"https://github.com/immunogenomics/presto.git\", ",
   "ref = \"a24772a135c7895a8183b007376050556c60a05b\")"
 )

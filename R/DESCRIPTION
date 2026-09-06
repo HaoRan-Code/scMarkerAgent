@@ -15,26 +15,27 @@ Encoding: UTF-8
 Depends:
     R (>= 4.2)
 Imports:
-    jsonlite,
-    tools,
-    utils
-Suggests:
     curl,
     data.table,
     digest,
     ggplot2,
+    jsonlite,
+    Matrix,
+    presto,
+    scales,
+    Seurat (>= 5.0.0),
+    tools,
+    utils
+Suggests:
     ggrastr,
     httpuv,
     later,
-    Matrix,
     png,
-    presto,
     promises,
-    scales,
-    Seurat (>= 5.0.0),
     testthat (>= 3.0.0),
     zip
+Additional_repositories: https://haoran-code.r-universe.dev
 Config/testthat/edition: 3
-URL: https://github.com/HaoRan-Code/scMarkerAgent, https://doi.org/10.5281/zenodo.22333283
+URL: https://github.com/HaoRan-Code/scMarkerAgent, https://haoran-code.r-universe.dev/scmarkeragent, https://doi.org/10.5281/zenodo.22333283
 BugReports: https://github.com/HaoRan-Code/scMarkerAgent/issues
 Config/roxygen2/version: 8.0.0
