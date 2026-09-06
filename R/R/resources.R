@@ -134,6 +134,11 @@ download_resources <- function(dest, url = NULL) {
   dir.create(dest, recursive = TRUE, showWarnings = FALSE)
   archive <- tempfile(fileext = ".tar.gz")
   on.exit(unlink(archive), add = TRUE)
+  ## R's default download timeout is 60 seconds for the whole transfer, which a 150 MB
+  ## archive exceeds on an ordinary connection; the download then dies at a fraction of
+  ## the file. Lift it for this call only.
+  old_timeout <- options(timeout = max(3600, getOption("timeout", 60)))
+  on.exit(options(old_timeout), add = TRUE)
   message("downloading ", url)
   utils::download.file(url, archive, mode = "wb", quiet = FALSE)
   message("unpacking ...")

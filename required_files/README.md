@@ -2,7 +2,8 @@
 
 The curated marker resource scMarkerAgent annotates against. It is **required** — neither
 package ships a marker database — and it is too large for git, so it lives in the archive
-below and this directory is empty in a fresh clone.
+below; a fresh clone carries only this README, the checksum index (`resource_index.json`,
+which both packages ship a copy of) and the bundle manifest.
 
 ## Download
 

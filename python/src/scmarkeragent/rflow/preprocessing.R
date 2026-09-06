@@ -174,6 +174,16 @@ cat(sprintf(
   "  clusters: Leiden(igraph) res=%g -> %d clusters\n",
   RES, length(unique(clusters))
 ))
+if (length(unique(clusters)) < 2L) {
+  # Every later stage reads one-vs-rest differential expression, which has no "rest" for
+  # a single cluster; presto::wilcoxauc would stop here anyway, with a message about
+  # groups that says nothing about what to do. Same check and wording as preprocessing.py.
+  stop(sprintf(paste0(
+    "Leiden clustering at resolution %g put every cell in one cluster, and one-vs-rest ",
+    "differential expression is undefined for a single cluster. Raise ",
+    "clustering_resolution, or check that the input holds more than one population."
+  ), RES), call. = FALSE)
+}
 cluster_col_out <- sprintf("leiden_res%g", RES)
 umap <- NULL
 if (COMPUTE_UMAP) {

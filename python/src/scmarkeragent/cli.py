@@ -39,7 +39,11 @@ def _parser():
 
     annotate = sub.add_parser(
         "annotate",
-        help="Run Deterministic Marker Annotation and optional evidence refinement",
+        help=(
+            "Annotate the clusters of one .h5ad dataset against the curated marker "
+            "resource: QC, clustering, differential expression, candidate retrieval, "
+            "the annotating agent and its judges, and the delivered result package"
+        ),
     )
     annotate.add_argument("--input", required=True)
     annotate.add_argument("--tag", default="dataset")
@@ -73,12 +77,18 @@ def _parser():
         ),
     )
 
-    config = sub.add_parser("config")
+    config = sub.add_parser(
+        "config",
+        help="Print the effective configuration and the resource paths a run would use",
+    )
     config.add_argument("--resource-dir")
     config.add_argument("--work-dir")
     config.add_argument("--offline", action="store_true")
 
-    verify = sub.add_parser("verify-resources")
+    verify = sub.add_parser(
+        "verify-resources",
+        help="Check that every resource file a run would read is present, with sizes and hashes",
+    )
     verify.add_argument("--resource-dir")
     verify.add_argument("--work-dir")
     verify.add_argument("--offline", action="store_true")

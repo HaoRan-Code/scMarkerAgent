@@ -452,6 +452,16 @@ def preprocess(
     )
     clusters = Ac.obs["leiden"].astype(str).to_numpy()
     print(f"  clusters: Leiden res={res} -> {len(set(clusters))} clusters")
+    if len(set(clusters)) < 2:
+        # Every later stage reads one-vs-rest differential expression, which has no
+        # "rest" for a single cluster; continuing would hand the retrieval gate NaN
+        # statistics and report an unresolved cluster as if the evidence had been weighed.
+        raise ValueError(
+            f"Leiden clustering at resolution {res:g} put every cell in one cluster, and "
+            "one-vs-rest differential expression is undefined for a single cluster. "
+            "Raise --clustering-resolution, or check that the input holds more than one "
+            "population."
+        )
     score_pca_n = int(prep_cfg["score_pca_n"])
     emb = Ac.obsm["X_pca"][:, :score_pca_n]
     if compute_umap:

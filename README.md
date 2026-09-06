@@ -1,65 +1,109 @@
-# scMarkerAgent
+<h1 align="center">scMarkerAgent</h1>
 
-Evidence-grounded cell-type annotation for single-cell RNA-seq, where every marker claim
-resolves to a curated publication and its source sentence.
+<p align="center">
+  <b>Evidence-grounded cell-type annotation for single-cell RNA-seq.</b><br>
+  Every label comes with the markers that carry it, the sentences that assert them, and the publications they came from.
+</p>
 
-scMarkerAgent does not map cells onto a reference atlas. It retrieves candidate identities
-from a curated marker resource, measures each candidate's whole panel in your data, and
-asks a language model to decide which identity those measurements support — then puts the
-evidence, the competing candidates and the quality-control verdict in the output so a
-reader can check the call rather than take it.
+<p align="center">
+  <a href="https://markeragent.net"><img alt="web platform" src="https://img.shields.io/badge/web%20platform-markeragent.net-1B8A80"></a>
+  <a href="https://doi.org/10.5281/zenodo.22333283"><img alt="Zenodo" src="https://img.shields.io/badge/code%20%2B%20resource-10.5281%2Fzenodo.22333283-1682D4"></a>
+  <img alt="Python 3.12" src="https://img.shields.io/badge/python-3.12-3776AB?logo=python&logoColor=white">
+  <img alt="R 4.2 or later" src="https://img.shields.io/badge/R-4.2%2B-276DC3?logo=r&logoColor=white">
+  <a href="LICENSE"><img alt="licence" src="https://img.shields.io/badge/licence-PolyForm%20Noncommercial%201.0.0-6f42c1"></a>
+</p>
 
-## Two arms, one algorithm
+<h3 align="center">How an annotation is made</h3>
+
+<p align="center">Every call the annotation tool makes starts from the curated database and narrows it with the data you uploaded. This is one real run &mdash; a human prostate dataset, one cluster &mdash; replayed from the record it wrote. Every count on screen is that record's.</p>
+
+<p align="center">
+  <img src="docs/workflow.gif" alt="How an annotation is made: 3,112 unlabelled cells; the literature narrowed by two gates from 261 to 9 candidate identities; the agent's call, an independent review without the reasoning, and the reported label with its evidence" width="100%">
+</p>
+<p align="center"><sub>Replay it interactively, step by step, at <a href="https://markeragent.net">markeragent.net</a>.</sub></p>
+
+scMarkerAgent annotates the clusters of a single-cell dataset without a reference atlas.
+It retrieves candidate identities from a curated, literature-derived marker resource,
+measures each candidate's whole marker panel in your data, and lets an agent decide which
+identity the measurements support. Every label is delivered with its markers, their
+detection fractions, the verbatim sentences and PMCIDs behind them, the competing
+candidates and the quality-control verdict.
 
 The same pipeline is implemented twice so that neither format has to be converted:
 
-| Your data | Package | Reader |
+| Your data | Install | Reader |
 | --- | --- | --- |
-| `.h5ad` (AnnData / scanpy) | `python/` | native AnnData |
-| `.rds` (Seurat) | `R/` | native Seurat |
+| `.h5ad` (AnnData / scanpy) | the Python arm, [`python/`](python/) | native AnnData |
+| `.rds` (Seurat) | the R arm, [`R/`](R/) | native Seurat |
 
-Both arms start from **raw counts** and run the same workflow: QC, log-normalization,
-HVG/PCA/kNN, Leiden clustering (always recomputed — a partition carried by the input is
-never reused), genome-wide Wilcoxon differential expression, candidate retrieval, and the
-annotating agent with its quality-control judges. They share one configuration file, one
-set of prompts and one marker resource.
+Both arms share one configuration, one prompt set, one marker resource and one output
+schema. An arm refuses the other's format rather than converting it.
 
-An arm refuses the other's format rather than converting it:
+## Get started
 
-```
-$ scmarkeragent annotate --input dataset.rds ...
-scmarkeragent: .rds input belongs to the R arm, not the PYTHON arm: /data/dataset.rds
-  Run it with the R package: scmarkeragent::annotate() instead.
-  The two arms read their own object directly; neither converts the other's format.
-```
+Six steps. Steps 1, 3 and 4 are the same for both arms; step 2 depends on your data format.
 
-## Install
-
-### Python
+### 1. Get the code
 
 ```bash
-pip install ./python
+git clone https://github.com/HaoRan-Code/scMarkerAgent.git
+cd scMarkerAgent
 ```
 
-Requires Python 3.12. See `python/pyproject.toml` for pinned dependencies.
+(To contribute, fork on GitHub first and clone your fork instead. Just to use the tool, a
+plain clone is all you need.)
 
-### R
+### 2. Install one arm
+
+**Python arm, for `.h5ad`** (Python 3.12 exactly; every dependency is pinned):
+
+```bash
+conda create -n scmarkeragent python=3.12 -y && conda activate scmarkeragent   # any 3.12 environment works
+pip install ./python
+scmarkeragent --help
+```
+
+**R arm, for Seurat `.rds`** (R 4.2 or later, Seurat 5), from the repository root:
 
 ```r
-# install.packages("remotes")
+install.packages("remotes")
 remotes::install_local("R", dependencies = TRUE)
+library(scmarkeragent)
 ```
 
-`dependencies = TRUE` matters: `presto` is not on CRAN and is resolved through the
-package's `Remotes:` field (pinned to a commit of `immunogenomics/presto`), which
-`remotes` or `devtools` can follow and plain `install.packages` cannot. If it is
-missing at run time, `annotate()` stops before the run starts and says how to install
-it.
+`dependencies = TRUE` pulls in Seurat and the other runtime packages, including `presto`
+(not on CRAN; pinned to a commit through the package's `Remotes:` field). That resolution
+goes through the GitHub API, which allows anonymous clients 60 requests per hour. If you
+see `HTTP error 403 ... API rate limit exceeded`, either log in once
+(`usethis::create_github_token()` then `gitcreds::gitcreds_set()`) or install without the
+API:
 
-## Get the marker resource
+```r
+install.packages(c("Seurat", "data.table", "Matrix", "digest", "ggplot2", "scales",
+                   "jsonlite", "curl", "ggrastr", "png", "zip"))
+remotes::install_git("https://github.com/immunogenomics/presto.git",
+                     ref = "a24772a135c7895a8183b007376050556c60a05b")
+install.packages("R", repos = NULL, type = "source")
+```
 
-The curated marker resource is too large for GitHub and is distributed separately. It is
-required — the pipeline has no built-in marker database.
+<details>
+<summary>Install without cloning</summary>
+
+```bash
+pip install "git+https://github.com/HaoRan-Code/scMarkerAgent.git#subdirectory=python"
+```
+
+```r
+remotes::install_github("HaoRan-Code/scMarkerAgent", subdir = "R", dependencies = TRUE)
+```
+
+</details>
+
+### 3. Download the marker resource (once, about 760 MiB)
+
+The curated resource is what every annotation is measured against. It is too large for
+git, so either arm fetches it from Zenodo and checks every file against a shipped SHA-256
+index; a truncated download fails instead of annotating against half a database.
 
 ```bash
 scmarkeragent download-resources --dest ~/scmarkeragent-resources
@@ -69,74 +113,126 @@ scmarkeragent download-resources --dest ~/scmarkeragent-resources
 scmarkeragent::download_resources("~/scmarkeragent-resources")
 ```
 
-Both verify every file against `required_files/resource_index.json` (SHA-256) after
-download. Point a run at the result with `--resource-dir` / `resource_dir =`.
+Offline machine: download `scmarkeragent-curated.tar.gz` from
+[doi:10.5281/zenodo.22333283](https://doi.org/10.5281/zenodo.22333283), unpack it anywhere,
+and use that directory in step 5.
 
-See `required_files/README.md` for the contents, sizes and the archive DOI.
+### 4. Set a language-model credential
 
-## Quick start
+The annotating agent and its judges call an OpenAI-compatible endpoint.
+
+```bash
+export OPENAI_API_KEY="sk-..."
+export OPENAI_BASE_URL="https://..."   # only for a compatible provider; omit for OpenAI
+```
+
+```r
+Sys.setenv(OPENAI_API_KEY = "sk-...")
+Sys.setenv(OPENAI_BASE_URL = "https://...")   # only for a compatible provider
+```
+
+Every call is cached by prompt hash, so rerunning the same data costs nothing, and every
+cold call is written to an audit log. `SCMA_LLM_MODEL` overrides the default model.
+
+### 5. Run
+
+Three things about your data are required and never guessed: the species, the tissue, and
+**where the raw counts are** (`--counts-source` / `counts_source`). Annotating a normalized
+matrix as if it were counts is the one failure that produces plausible output from wrong
+input, so the pipeline refuses to guess.
 
 ```bash
 scmarkeragent annotate \
-  --input pbmc.h5ad \
-  --tag pbmc \
-  --species Human \
-  --tissue blood \
+  --input pbmc.h5ad --tag pbmc \
+  --species Human --tissue blood \
   --counts-source X \
   --resource-dir ~/scmarkeragent-resources
 ```
 
 ```r
 scmarkeragent::annotate(
-  input         = "pbmc.rds",
-  tag           = "pbmc",
-  species       = "Human",
-  tissue        = "blood",
+  input = "pbmc.rds", tag = "pbmc",
+  species = "Human", tissue = "blood",
   counts_source = "RNA/counts",
-  resource_dir  = "~/scmarkeragent-resources"
+  resource_dir = "~/scmarkeragent-resources"
 )
 ```
 
-`--counts-source` / `counts_source` is required and never guessed: the pipeline starts
-from raw counts, and silently annotating a normalized matrix as if it were counts is the
-one failure that produces plausible output from wrong input.
-
-## What a run produces
-
-| File | Contents |
+| | |
 | --- | --- |
-| `cluster_summary.csv` | One row per cluster: the label to read, its parent and subtype, resolution status, confidence, rationale, quality-control outcome, key markers with detection fractions, and the PMCIDs behind them |
-| `marker_evidence.csv` | Every measured marker of every claimed identity, with detection fractions, fold change, publication support and the source sentence |
-| `cluster_evidence.jsonl` | The full audit sidecar: every retrieved candidate with its scores and complete panel, the agent's turns and tool calls, and the judges' verdicts |
-| `viewer/index.html` | A self-contained interactive report; also packaged as `<tag>_results.zip` |
-| `figures/`, `figure_data/` | Publication figures and the numbers behind each one |
+| `--species` / `species` | `Human`, `Mouse` or `Rat` |
+| `--tissue` / `tissue` | free text, resolved against UBERON (`blood`, `liver`, `prostate gland`, ...) |
+| `--counts-source` | Python: `X`, `raw.X` or `layers/<name>`. R: `<assay>/<layer>`, for example `RNA/counts` |
+| `--disease` / `disease` | default `Normal` |
+| `--clustering-resolution` | Leiden resolution, default 0.5; clustering is always recomputed from the counts |
+| `--work-dir` / `work_dir` | where cache and results go; default `./.scmarkeragent` |
+| `--offline` / `offline = TRUE` | run the deterministic stages only, never contact a model |
 
-A cluster carrying more than one population is reported as such: `resolution_status` is
-`mixed`, the co-occurring identities are named, and `cooccurring_markers` /
-`cooccurring_pmcid` carry their evidence — the annotation is not forced into one label.
+### 6. Read the results
 
-## Requires a language model
+Everything lands in `.scmarkeragent/results/<tag>/`. Open `viewer/index.html` for the
+interactive report, or read the tables:
 
-The annotating agent and its quality-control judges call an OpenAI-compatible endpoint.
-Set `OPENAI_API_KEY` (and `OPENAI_BASE_URL` for a compatible provider). Every call is
-cached by prompt hash, so a rerun of the same data replays without spending anything, and
-every cold call is written to an audit log.
+| File | What it holds |
+| --- | --- |
+| `cluster_summary.csv` | one row per cluster: the label, its parent and subtype, `resolution_status` (`resolved`, `mixed`, `unresolved`), confidence, rationale, QC verdict, key markers with detection fractions, PMCIDs |
+| `marker_evidence.csv` | every measured marker of every claimed identity, with detection in and out of the cluster, fold change, publication support, PMCID and the source sentence |
+| `cluster_evidence.jsonl` | the audit trail: every retrieved candidate with its scores and full panel, every agent turn and tool call, every judge verdict |
+| `figures/`, `figure_data/` | figures and the numbers behind each one |
+| `run_manifest.json` | run status and the path of every delivered file |
 
-`--no-cluster-annotation` runs the retrieval and scoring stages without a model; the label
-is then the top of the retrieval order, and every field that records how a label was
-produced says so.
+A cluster carrying two populations is reported as `mixed` with both identities and their
+evidence; insufficient evidence is reported as `Unknown`, never forced into a label.
+`annotation_confidence` is an evidence score, not a probability. One label is broadcast to
+every cell in a cluster, so raise `--clustering-resolution` if a minority population
+inside a cluster matters for your question.
 
-## Layout
+<details>
+<summary>Smoke test: check the installation in one minute, without a model or your own data</summary>
+
+`python/examples/` holds an 80-cell synthetic dataset in both formats. It exercises the
+whole pipeline and says nothing about annotation quality (250 genes, no real biology). The
+raised resolution is needed because at the default 0.5 these 80 cells form a single
+cluster, which the pipeline refuses: one-vs-rest differential expression is undefined then.
+
+```bash
+scmarkeragent annotate --input python/examples/synthetic_input.h5ad --tag smoke \
+  --species Human --tissue blood --counts-source X --clustering-resolution 1.0 \
+  --resource-dir ~/scmarkeragent-resources --offline
+```
+
+```r
+scmarkeragent::annotate(
+  input = "python/examples/synthetic_input.rds", tag = "smoke",
+  species = "Human", tissue = "blood", counts_source = "RNA/counts",
+  clustering_resolution = 1.0, resource_dir = "~/scmarkeragent-resources", offline = TRUE
+)
+```
+
+Success looks like `"status": "completed"` in the printed manifest and a
+`.scmarkeragent/results/smoke/` directory with the files listed above.
+
+</details>
+
+## Repository layout
 
 ```
-python/          Python package (.h5ad arm)
+python/          Python package (.h5ad arm); also carries the shared pipeline sources and the smoke-test data
 R/               R package (.rds arm)
-required_files/  marker resource — data not in git; see its README for the archive
+required_files/  the resource download contract and checksum index (the data itself is on Zenodo)
+docs/            the walkthrough recording shown above
 ```
+
+Per-arm details (every option, environment variables, tests): [`python/README.md`](python/README.md)
+and [`R/README.md`](R/README.md).
+
+## Citing
+
+Please cite the archived code and resource: [doi:10.5281/zenodo.22333283](https://doi.org/10.5281/zenodo.22333283).
 
 ## Licence
 
-Noncommercial use only. Code: PolyForm Noncommercial 1.0.0 (`LICENSE`). Marker resource:
-CC BY-NC 4.0; its source sentences are quoted from PubMed Central open-access articles
-and every row carries its PMCID/PMID, and the third-party ontology and ortholog files
+Noncommercial use only. Code: PolyForm Noncommercial 1.0.0 ([`LICENSE`](LICENSE)). Marker
+resource: CC BY-NC 4.0; its source sentences are quoted from PubMed Central open-access
+articles and every row carries its PMCID/PMID. The third-party ontology and ortholog files
 keep their own terms, recorded per file in the resource's `resource_manifest.json`.

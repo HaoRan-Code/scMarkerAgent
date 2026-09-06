@@ -44,6 +44,19 @@ def test_resource_manifest_matches_resolved_resources():
     assert set(manifest["files"]) == set(resolved)
 
 
+def test_packaged_index_is_the_repository_download_contract():
+    """`download-resources` reads the packaged index, so it must be the file the repository
+    publishes under required_files/ -- archive URL included, or a fresh install cannot fetch
+    the resource without being handed a URL by hand."""
+    packaged = ROOT / "src/scmarkeragent/resources/resource_index.json"
+    index = json.loads(packaged.read_text(encoding="utf-8"))
+    assert index.get("archive_url", "").startswith("https://")
+    canonical = ROOT.parent / "required_files" / "resource_index.json"
+    if not canonical.is_file():
+        pytest.skip("not running inside the repository checkout")
+    assert packaged.read_bytes() == canonical.read_bytes()
+
+
 def test_no_cell_ontology_resource_is_declared_or_resolved():
     """The package must not depend on cl.obo in any form.
 
