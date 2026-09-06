@@ -10,31 +10,27 @@ R 4.2 or later with Seurat 5. From the repository root:
 
 ```r
 install.packages("remotes")
-remotes::install_local("R", dependencies = TRUE)
-# or, without cloning:
-remotes::install_github("HaoRan-Code/scMarkerAgent", subdir = "R", dependencies = TRUE)
-```
-
-`dependencies = TRUE` matters: Seurat and the other runtime packages are declared in
-`Suggests`, and `presto` (the differential-expression engine, not on CRAN) is pinned to a
-commit through the `Remotes:` field, which plain `install.packages` cannot follow.
-
-`remotes` resolves that field through the GitHub API, which allows anonymous clients 60
-requests per hour (one install uses about 25). On `HTTP error 403 ... API rate limit
-exceeded`, either log in once (`usethis::create_github_token()` then
-`gitcreds::gitcreds_set()`) or install without the API, from the repository root:
-
-```r
-install.packages(c("Seurat", "data.table", "Matrix", "digest", "ggplot2", "scales",
-                   "jsonlite", "curl", "ggrastr", "png", "zip"))
-remotes::install_git("https://github.com/immunogenomics/presto.git",
+remotes::install_git("https://github.com/immunogenomics/presto.git",      # the DE engine; not on CRAN
                      ref = "a24772a135c7895a8183b007376050556c60a05b")
-install.packages("R", repos = NULL, type = "source")
+remotes::install_local("R", dependencies = TRUE)                         # Seurat and everything else
 ```
+
+Without cloning, replace the last line with
+`remotes::install_git("https://github.com/HaoRan-Code/scMarkerAgent.git", subdir = "R", dependencies = TRUE)`.
+
+`presto`, the genome-wide differential-expression engine, is not on CRAN, so it is
+installed first by itself, cloned over the git protocol at the commit the release was
+validated with. `dependencies = TRUE` matters for the rest: Seurat and the other runtime
+packages are declared in `Suggests`, so the default dependency set would skip them.
+Neither step uses the GitHub API, whose anonymous quota (60 calls per hour per IP address)
+is what makes `remotes::install_github()` fail with `HTTP error 403` behind shared
+addresses; the package therefore carries no `Remotes:` field.
 
 If `presto` is missing when a run starts, `annotate()` stops before doing anything and
-prints the install command. `ggrastr`, `png` and `zip` only serve the report; without them
-the pipeline still runs and records what it skipped.
+prints the install line above. `ggrastr`, `png` and `zip` only serve the report; without
+them the pipeline still runs and records what it skipped. If a CRAN package fails to
+compile, the message names the missing system library (`libxml2`, `libcurl`, `libpng`,
+`hdf5`, ...); install it with your system's package manager and rerun.
 
 The pipeline itself (the same `rflow/` sources the benchmarks ran, with the shared
 configuration, prompts, schemas and viewer assets) ships under `inst/scmarkeragent/` and

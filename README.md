@@ -67,24 +67,22 @@ scmarkeragent --help
 
 ```r
 install.packages("remotes")
-remotes::install_local("R", dependencies = TRUE)
+remotes::install_git("https://github.com/immunogenomics/presto.git",      # the DE engine; not on CRAN
+                     ref = "a24772a135c7895a8183b007376050556c60a05b")
+remotes::install_local("R", dependencies = TRUE)                         # Seurat and everything else
 library(scmarkeragent)
 ```
 
-`dependencies = TRUE` pulls in Seurat and the other runtime packages, including `presto`
-(not on CRAN; pinned to a commit through the package's `Remotes:` field). That resolution
-goes through the GitHub API, which allows anonymous clients 60 requests per hour. If you
-see `HTTP error 403 ... API rate limit exceeded`, either log in once
-(`usethis::create_github_token()` then `gitcreds::gitcreds_set()`) or install without the
-API:
+`presto` is installed first, by itself, because it is not on CRAN: the line clones it over
+the git protocol at the commit the release was validated with. `dependencies = TRUE` then
+pulls in Seurat and the other runtime packages from CRAN. Neither step uses the GitHub
+API, whose anonymous quota (60 calls per hour per IP address) is what makes
+`remotes::install_github()` fail with `HTTP error 403` behind shared addresses. If you
+forget `presto`, `annotate()` stops before running and prints that same line.
 
-```r
-install.packages(c("Seurat", "data.table", "Matrix", "digest", "ggplot2", "scales",
-                   "jsonlite", "curl", "ggrastr", "png", "zip"))
-remotes::install_git("https://github.com/immunogenomics/presto.git",
-                     ref = "a24772a135c7895a8183b007376050556c60a05b")
-install.packages("R", repos = NULL, type = "source")
-```
+If a CRAN package fails to compile, the cause is almost always a missing system library;
+the message names it (for example `libxml2`, `libcurl`, `libpng`, `hdf5`). Install that
+library with your system's package manager and rerun the command.
 
 <details>
 <summary>Install without cloning</summary>
@@ -94,7 +92,10 @@ pip install "git+https://github.com/HaoRan-Code/scMarkerAgent.git#subdirectory=p
 ```
 
 ```r
-remotes::install_github("HaoRan-Code/scMarkerAgent", subdir = "R", dependencies = TRUE)
+remotes::install_git("https://github.com/immunogenomics/presto.git",
+                     ref = "a24772a135c7895a8183b007376050556c60a05b")
+remotes::install_git("https://github.com/HaoRan-Code/scMarkerAgent.git",
+                     subdir = "R", dependencies = TRUE)
 ```
 
 </details>

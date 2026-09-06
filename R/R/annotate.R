@@ -12,6 +12,17 @@
 ## is a Suggests because it is not on CRAN, so availability is a runtime question.
 ## The guarded optionals (ggrastr, png, zip) are not listed: the pipeline itself
 ## degrades without them and records what it skipped.
+##
+## presto is deliberately NOT declared in a Remotes: field. remotes resolves that field
+## through the GitHub REST API on every install, even when presto is already present,
+## and anonymous clients get 60 API calls per hour per IP address; behind a shared
+## address the documented install then fails with "API rate limit exceeded". The
+## install command below clones over the git protocol instead, which has no quota, and
+## pins the same commit the released pipeline was validated with.
+.presto_install_command <- paste0(
+  "remotes::install_git(\"https://github.com/immunogenomics/presto.git\", ",
+  "ref = \"a24772a135c7895a8183b007376050556c60a05b\")"
+)
 .pipeline_dependencies <- function() {
   c(
     curl = requireNamespace("curl", quietly = TRUE),
@@ -31,7 +42,7 @@
   }
   missing <- names(available)[!available]
   hint <- if ("presto" %in% missing) {
-    "\n  presto is not on CRAN: remotes::install_github(\"immunogenomics/presto\")"
+    paste0("\n  presto is not on CRAN; install it with:\n  ", .presto_install_command)
   } else {
     ""
   }

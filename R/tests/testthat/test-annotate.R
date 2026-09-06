@@ -86,6 +86,14 @@ test_that("the dependency preflight names what is missing, and presto gets the h
   )
   expect_error(
     .stop_if_pipeline_dependencies_missing(c(Seurat = TRUE, presto = FALSE)),
-    "immunogenomics/presto"
+    "install_git.*immunogenomics/presto.git.*a24772a135c7895a8183b007376050556c60a05b"
   )
+})
+
+test_that("presto is not resolved through the GitHub API", {
+  # A Remotes: field makes every remotes::install_* call consult api.github.com, whose
+  # anonymous quota is 60 calls per hour per IP address; the install then fails behind a
+  # shared address even when presto is already installed.
+  description <- read.dcf(system.file("DESCRIPTION", package = "scmarkeragent"))
+  expect_false("Remotes" %in% colnames(description))
 })
