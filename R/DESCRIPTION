@@ -25,15 +25,15 @@ Imports:
     scales,
     Seurat (>= 5.0.0),
     tools,
-    utils
+    utils,
+    zip
 Suggests:
     ggrastr,
     httpuv,
     later,
     png,
     promises,
-    testthat (>= 3.0.0),
-    zip
+    testthat (>= 3.0.0)
 Additional_repositories: https://haoran-code.r-universe.dev
 Config/testthat/edition: 3
 URL: https://github.com/HaoRan-Code/scMarkerAgent, https://haoran-code.r-universe.dev/scmarkeragent, https://doi.org/10.5281/zenodo.22333283

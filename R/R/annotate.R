@@ -11,8 +11,9 @@
 ## traceback. These are declared Imports, so an install from a repository brings them
 ## in; the preflight still exists because the pipeline runs in a fresh Rscript whose
 ## library path may differ from the session's, and because a package can be removed
-## after install. The guarded optionals (ggrastr, png, zip) are not listed: the
-## pipeline itself degrades without them and records what it skipped.
+## after install. zip is listed because the delivered results archive needs it and the
+## report stage stops without it; the guarded optionals (ggrastr, png) are not: the
+## pipeline degrades without them and records what it skipped.
 ##
 ## presto is not on CRAN. It is served, at the commit the released pipeline was
 ## validated with, by the package's own CRAN-like repository on R-universe, which is
@@ -35,7 +36,8 @@
     Matrix = requireNamespace("Matrix", quietly = TRUE),
     scales = requireNamespace("scales", quietly = TRUE),
     Seurat = requireNamespace("Seurat", quietly = TRUE),
-    presto = requireNamespace("presto", quietly = TRUE)
+    presto = requireNamespace("presto", quietly = TRUE),
+    zip = requireNamespace("zip", quietly = TRUE)
   )
 }
 

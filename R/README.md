@@ -21,8 +21,8 @@ install.packages("scmarkeragent")
 From a clone (after editing the code), set the same `options()` and run
 `remotes::install_local("R", dependencies = TRUE)` from the repository root. Seurat,
 `presto` and the other runtime packages are declared in `Imports`, so both routes install
-them without further flags; `ggrastr`, `png` and `zip` only serve the report and without
-them the pipeline still runs and records what it skipped.
+them without further flags. Only `ggrastr` and `png` are optional (rasterized figure points
+and one stitched PNG); without them the pipeline still runs and records what it skipped.
 
 Neither route uses the GitHub API, whose anonymous quota (60 calls per hour per IP
 address) is what makes `remotes::install_github()` fail with `HTTP error 403` behind
