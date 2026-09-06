@@ -9,7 +9,7 @@
   <a href="https://markeragent.net"><img alt="web platform" src="https://img.shields.io/badge/web%20platform-markeragent.net-1B8A80"></a>
   <a href="https://doi.org/10.5281/zenodo.22333283"><img alt="Zenodo" src="https://img.shields.io/badge/code%20%2B%20resource-10.5281%2Fzenodo.22333283-1682D4"></a>
   <img alt="Python 3.12" src="https://img.shields.io/badge/python-3.12-3776AB?logo=python&logoColor=white">
-  <img alt="R 4.2 or later" src="https://img.shields.io/badge/R-4.2%2B-276DC3?logo=r&logoColor=white">
+  <a href="https://haoran-code.r-universe.dev/scmarkeragent"><img alt="R package on R-universe" src="https://haoran-code.r-universe.dev/scmarkeragent/badges/version?label=R%20package&color=276DC3"></a>
   <a href="LICENSE"><img alt="licence" src="https://img.shields.io/badge/licence-PolyForm%20Noncommercial%201.0.0-6f42c1"></a>
 </p>
 
