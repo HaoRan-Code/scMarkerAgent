@@ -1,0 +1,70 @@
+# Dataset Consistency
+
+# Task
+
+Every cluster of one dataset has been annotated. Some clusters were delivered the SAME
+identity; others form a contested pair -- one cluster's own audit read a name as occupying
+it while a DIFFERENT cluster was delivered that very name. Read the group side by side and
+say, for each member, whether its delivered name is consistent with what the group's
+evidence shows, or whether one member carries a name's defining program and another was
+given that name without it.
+
+You are not re-annotating. You may only mark a cluster for one more review round and say
+what the reviewer should be shown. Return exactly one minified JSON object and nothing
+else.
+
+# Evidence
+
+`group` is the set of clusters read together, with `why_grouped` (the shared delivered
+name, or the contested pair) and `delivered_names`, every name delivered in this group.
+
+Each `members` entry carries: `cluster_id`, `n_cells`, `delivered` (selected name,
+co-occurring identities, confidence), `species_definers_of_each_delivered_name` -- EVERY
+name of `delivered_names`, with its species-wide definers as measured IN THIS CLUSTER
+(compact rows: "GENE n_pub[R][*] pct_in/pct_out", `!` = not raised, `*` = not in this
+tissue's panel, `~` = this tissue curates the gene for another candidate) -- the cluster's
+`definer_audit` (own_program, definers_present/absent, and `rivals_read` with each pair's
+relation and whose program occupies the cluster), and `top_enriched`, its strongest
+genome-wide genes.
+
+Every name's rows are shown in every member for one reason: the question "which cluster
+carries this name" cannot be read from one cluster's numbers. A member can hold a name
+while another member of the group carries that name's best-published definers in far more
+of its cells, and while the genes of a different name peak in the member itself.
+
+# Rules
+
+[C1] Two clusters delivered one name should both show that name's replicated definers.
+Where one member has them detected in most cells and another has them absent or peaking
+elsewhere while a different program occupies it, the second member is `weaker_member`:
+the name was carried across the dataset by shared genes, not by its own.
+
+[C2] Where the members' co-occurring identities differ, or the same definers occupy one
+member and only a minority of another, say so in the note: a mixed cluster and a pure one
+can share a name honestly, and a member whose definers are absent cannot.
+
+[C3] A member whose top genes belong to a different program than the others' -- a
+receptor program in one, a phagocytic program in another -- is `conflict`: the name was
+carried by shared genes, not by its own.
+
+[C4] What makes a member `consistent` is its OWN rows: the name's replicated definers
+that this tissue does not curate for another candidate are detected in this cluster, and
+this cluster is where they are detected most among the group. An earlier audit reading
+`dominant` is not itself a reason -- that audit is one reader's reading of the same rows
+you hold, and it can read `dominant` while the name's best-published definers are detected
+in few of these cells and peak in another member. Where a group
+holds several names, ask for each member which of those names its own rows carry.
+Do not mark a member because the group is large, because its confidence differs, or
+because you would have named it differently.
+
+[C5] `note_for_review` is what the next reviewer of a marked cluster should see: which
+member carries the name's definers and at what percentages, which genes in the marked
+cluster point to another of the group's names, and at what percentages there. Quote
+measured numbers from this packet only.
+
+# Answering
+
+{"members":[{"cluster_id":"<id>","status":"consistent|weaker_member|conflict","note_for_review":"<empty for consistent>"}],
+"reason":"<one paragraph: what the group's evidence shows>"}
+
+EVIDENCE_PACKET_JSON={{EVIDENCE_PACKET_JSON}}

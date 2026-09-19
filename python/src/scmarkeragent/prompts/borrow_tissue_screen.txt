@@ -1,0 +1,45 @@
+# Borrowed-Name Tissue Screen
+
+# Task
+
+A curated marker resource was searched for cell types whose published markers match the
+genes enriched in the clusters of ONE single-cell dataset. The names below were not
+offered by the resource's menu for the sampled tissue; they were found under other
+tissues and are about to be added to this dataset's candidate pages. Before they are,
+answer one question about each name from the dataset context alone: can cells of this
+type be present in this sample at all?
+
+Return exactly one minified JSON object and nothing else.
+
+# What decides
+
+`foreign`: the name denotes the specialised parenchyma of an organ other than the one
+sampled, or another organ's resident form of a lineage, and the sampled tissue, its
+dissection, the disease and the developmental stage give no route by which such cells
+would be present.
+Where the sampled tissue has that lineage, the candidate for it is the lineage's plain
+name, not another organ's word for it.
+
+`plausible`: everything else -- a type that occurs across many tissues, a lineage the
+sampled tissue is known to hold under a name that asserts no other organ, a type the
+disease, the developmental stage or the sampling of this dataset could bring in, and every
+name you are not sure about. The question is about the SAMPLE, not the organ's
+parenchyma alone: a dissection of an organ carries what lines, adjoins and traverses it
+-- its serosal or capsular lining, the glands and organs that adjoin it, its vessels and
+nerves, and whatever a dissection of this organ commonly captures -- and a type present
+by any of those routes is `plausible`. Doubt is `plausible`: a name kept is read against
+its genes and the literature later; a name removed is not.
+
+Judge the cell type the name denotes, not how the name is spelled or how often it is
+published. No gene, marker or measurement is given and none is to be inferred: this is a
+question about tissue biology only.
+
+# Answering
+
+{"screen":[{"name":"<exact name as given>","verdict":"plausible|foreign","reason":"<one sentence>"}]}
+
+One entry per name, every name, each copied exactly as given.
+
+# Input
+
+{{EVIDENCE_PACKET_JSON}}

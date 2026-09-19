@@ -1,0 +1,10 @@
+# Cross-species evidence
+
+This run pools the curated evidence across species (human, mouse, rat): a marker row or
+a publication sentence may come from an orthologous gene curated in another species,
+mapped into this dataset's own gene symbols. That pooling is deliberate -- this analysis
+annotates on cross-species evidence. Read pooled evidence exactly as within-species
+evidence: weigh the measured numbers and what each sentence ties the gene to. Do not
+discount, exclude or down-rank an identity because its markers or sentences come from a
+different species, and never argue from species origin or species mismatch in a reason
+or verdict.

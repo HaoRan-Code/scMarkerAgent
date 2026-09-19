@@ -1,0 +1,80 @@
+# Program Reading
+
+# Task
+
+Read ONE cluster's genome-wide contrast before any candidate cell type is considered, and
+say what programs its cells are running. No cell-type name is asked for and none may be
+given: this reading is what the later steps check the candidates against, and it must not
+already contain an answer.
+
+Return exactly one minified JSON object and nothing else.
+
+# Evidence
+
+`cluster_top_enriched` are the cluster's most up-regulated genes one-versus-rest;
+`cluster_top_detection_gap` the genes detected in most of its cells with the widest gap
+in detection over the rest of the tissue, whatever their fold change (this is where a
+dominant cell type's flattened defining genes appear when the fold-change page cannot
+show them); `cluster_top_depleted` the genes the rest of the tissue expresses and this
+cluster does not. `pct_in`/`pct_out` are detection percentages inside/outside the
+cluster, 0-100; `log2FC` the mean one-versus-rest fold change; `auc` the rank statistic
+(0.5 = no separation).
+
+`claimed_by_species` on each row lists the cell types the curated resource ties the gene
+to anywhere in this species, with the publication count of each pairing, and `on_page`
+says whether that type is among this cluster's retrieved candidates. It is a fact about
+the literature's use of the gene, not a vote: a gene claimed by many unrelated types is
+shared, a gene claimed by none is uncharacterised, and a gene claimed by one type
+consistently is that type's signature. `genome_rows_not_curated_anywhere` counts the top
+rows dropped from these pages because no curated type anywhere uses them.
+
+# Rules
+
+[P1] Group the genes into coherent PROGRAMS by what they do together, naming each program
+by its function, not by a cell type. Put a gene in a program only where it belongs with
+the others; leave a gene out rather than force it.
+
+[P2] Separate STATE from identity. Cell cycle, interferon
+response, heat-shock/stress, hypoxia, mitochondrial or ribosomal load, and dissociation
+artefacts are states any cell type can be in. List them under `state_programs`, not among
+the identity-bearing programs.
+
+[P3] Say whether the pages show ONE identity-bearing program or MORE THAN ONE that do not
+belong to a single cell type. Two programs of one lineage at different maturity are one
+lineage, not two. A program that several lineages run ([P6]) does not add a lineage by
+itself: beside a one-lineage program it is one lineage doing two things, unless a SECOND
+one-lineage program is also present. Record the answer in
+`lineage_programs_count` and say why in `mixture_note`.
+
+[P4] Genes high inside AND high outside, or claimed by many unrelated types, are the
+tissue's background or shared machinery: list them under `background_or_shared`.
+
+[P5] Name genes exactly as shown. Do not name a cell type, a cell lineage, or a
+candidate: the schema check rejects a reading that does. Describe programs by function,
+not by the cell that usually runs them.
+
+[P6] For EACH identity-bearing program, say how many lineages in the body run it, from
+what the genes are rather than from any candidate:
+  - `one_lineage`: an antigen-receptor complex and its proximal signalling, a lineage
+    transcription-factor set, a structure only one lineage builds, a lineage-restricted
+    receptor family. Such a program says what the cells ARE.
+  - `several_lineages`: an effector or functional program more than one lineage runs, at
+    any maturity of the lineages that run it. Such a program says what the cells DO; it
+    can be the whole of a terminally differentiated cell's identity, but it cannot on its
+    own tell apart two lineages that both run it.
+  - `uncertain`: where the genes do not decide it.
+Give the answer in `lineage_specificity` and one sentence of `lineage_note` saying what
+about the genes decides it. Where a `several_lineages` program and a `one_lineage`
+program sit together, say in `mixture_note` that the second is what places the cells and
+the first is what they are doing -- still without a cell-type name.
+
+# Answering
+
+{"programs":[{"function":"<what this gene set does, no cell-type name>","genes":["GENE",...],"share_of_cluster":"most cells|about half|a minority","lineage_specificity":"one_lineage|several_lineages|uncertain","lineage_note":"<one sentence, no cell-type name>","note":"<optional: what separates it from the rest of the tissue>"}],
+"state_programs":[{"state":"cell cycle|interferon response|stress|hypoxia|mitochondrial load|other","genes":["GENE",...]}],
+"lineage_programs_count":1,
+"mixture_note":"<one sentence>",
+"background_or_shared":["GENE",...],
+"unplaced_top_genes":["GENE",...]}
+
+EVIDENCE_PACKET_JSON={{EVIDENCE_PACKET_JSON}}

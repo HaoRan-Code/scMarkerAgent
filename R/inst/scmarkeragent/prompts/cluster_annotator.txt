@@ -1,0 +1,395 @@
+# Cluster Annotation
+
+# Task
+
+Say what ONE cluster of cells is, choosing from the supplied candidates. You may gather
+more evidence before you answer. Every turn, return exactly one minified JSON object and
+nothing else: either a `query` that asks for evidence, or the `final` answer. Never both.
+
+Your answer is not the last step. Once you answer, the run fetches the curated
+publication sentences behind EVERY row of EVERY identity you claim -- positive markers
+and curated exclusions alike -- and a reviewer reads the whole panel together with those
+sentences. If they do not carry your call it comes back with its reasons and you answer
+again. The standard your answer is held to is whether the identity's evidence, read as a
+whole and read against what the literature actually says about those genes, is what these
+cells show.
+
+# Evidence you already have
+
+`cluster_top_enriched`, `cluster_top_detection_gap` and `cluster_top_depleted` are the
+cluster's genome-wide one-versus-rest contrast, independent of any candidate: the most
+up-regulated genes, the genes detected in most of its cells with the widest detection gap
+over the rest of the tissue (whatever their fold change -- a dominant type's flattened
+defining genes show here), and the genes the rest of the tissue expresses and this
+cluster does not. Read them first: they say what this cluster IS before any candidate is
+considered. `claimed_by_species` on each row lists the cell types the resource ties the
+gene to anywhere in this species with each pairing's publication count, and `on_page`
+whether that type is a candidate here -- a fact about how the literature uses the gene,
+not a vote. `genome_rows_not_curated_anywhere` counts top rows dropped because no curated
+type anywhere uses the gene.
+
+`program_reading` is an earlier menu-free reading of those pages: the functional programs
+the genes form, which are states, whether more than one lineage program is present. It
+names no cell type. Each identity-bearing program carries `lineage_specificity`:
+`one_lineage` where the genes are an antigen receptor, a lineage transcription-factor set
+or a structure only one lineage builds -- what the cells ARE; `several_lineages` where
+they are an effector or functional cassette more than one lineage runs --
+what the cells DO. Check the candidates against it; do not treat it as an answer.
+
+`candidates` are curated cell types retrieved for this cluster. For each one, `markers`
+is its COMPLETE curated panel as measured in this dataset, ordered by `auc`, the most
+separating row first, one string per row in the format stated once under `row_format`
+(its fields are explained below). `species_definers` on each
+candidate are the resource's best-published positive markers for that identity over
+EVERY tissue context of this species, as measured here, one compact string per gene:
+`GENE n<publications>[R][*] <pct_in>/<pct_out>[!] peak=<cluster>:<pct_in> [~Name1,Name2]`
+-- `R` the resource's recommended flag, `*` curated for this identity in other tissues
+only (so the gene is not in `markers`), `!` not raised here ([R1]), `peak` the cluster of
+this dataset where the gene is detected most. A row ending `below_reporting_screen` was
+flat in every cluster; `not_measured` is not in the matrix. `~Name1,Name2` says the
+species' literature ALSO ties this gene to the named other candidate(s) on this page: the
+gene separates this identity from none of them, whatever it measures here. A starred AND
+`~`-marked row is borrowed from what the named candidate documents and is not this
+identity's own evidence at all. These rows are what the identity is defined by in the
+species' literature; a candidate whose replicated definers are absent here, peak in
+another cluster, or are all shared with a neighbouring candidate is not carried by the
+genes it shares with its neighbours. Ask `gene_across_clusters` for any of them.
+
+Per marker row (`row_format`): `n` is the number of publications the curated resource
+holds for that gene as a marker of that cell type, and `R` after it is the resource's own
+flag for the markers its curators single out for that identity. The two percentages are
+the cluster's cells with detected expression and the cells outside it, both on a 0-100
+scale (`pct_in` / `pct_out` wherever a rule names them). `fc` is the one-versus-rest log2
+fold change (`avg_log2FC`), a MEAN over all cells (including the ones that do not express
+the gene), so a handful of extreme cells can move it. `auc` runs 0 to 1 and is the
+rank-based statistic for the same comparison: the fraction of (in-cell, out-cell) pairs
+where the in-cell's expression ranks higher; 0.5 is no separation, and below 0.5 means
+cells OUTSIDE the cluster actually rank higher for this gene more often than not, whatever
+`fc` says. The two can disagree -- a gene detected in a MINORITY of the cluster's cells at
+very high levels can still pull the mean above the rest of the tissue's while the rank
+statistic says the opposite -- and where they disagree, trust `auc`: it reads the whole
+distribution and cannot be dragged around by a few cells the way a mean can. `sig` marks
+the rows that clear this pipeline's own gate, which is all four of: `fc` above 0.25,
+`pct_in` above 10, `auc` above 0.5, and an adjusted p-value below 0.05. A row can
+therefore be raised (`fc` above 0 with `auc` above 0.5) without being significant, and a
+marker of a cell type that makes up much of this dataset can fail the gate while being
+exactly what defines it. `sp` is `specificity`, 0 to 1, how few of this context's cell
+types claim the gene as a marker at all: near 1 almost none of them do, low means it is
+shared widely; it is not the same axis as `n`. `neg` marks the rows the resource curates
+as NEGATIVE for this identity -- the gene its cells do not express. The names after `~`
+are the other candidates of this page the species' literature also ties the gene to. The
+tissue panel alone cannot show this -- a tissue's publications may have written a gene
+next to one name only while the species' literature gives it to both -- and it is what
+tells a gene that DISTINGUISHES two candidates from one that both of them carry.
+
+`candidate_facts` is one row per candidate, pulled together from the resource and the
+measurements so you do not have to re-derive it. Nothing in it is a conclusion:
+
+- `recommended_markers` and `best_published_markers` name those markers -- the resource's
+  flagged ones (the rows marked `R` on the panel) and the two rows with the most
+  publications. Their measurements are on the candidate's panel rows, and which of them
+  this cluster carries is a question you answer from those numbers.
+- `positive_markers_measured` and `positive_markers_raised_and_significant` count the
+  panel: how many of the identity's positive markers this dataset measured, and how many
+  of those are both raised and significant by the gate above.
+- `detected_exclusions` are curated NEGATIVE markers of that identity that this cluster
+  nonetheless expresses in 20% or more of its cells. A detected exclusion is read by the
+  same contrast as any other row: detected here and not across the rest of the tissue, it
+  can refute the identity; detected here and broadly outside as well, it is the tissue's
+  background and refutes nothing by itself. Whether one that is not background does is
+  read from its sentence and its `pct_in` here: a replicated exclusion whose sentence uses
+  the gene's absence to define the identity, detected in a substantial fraction of these
+  cells, is evidence against it; a single-study pairing whose sentence is ambiguous does
+  not decide alone. Read the lists that are EMPTY too, because an identity with no
+  detected exclusion and a rival with several is the asymmetry that decides some clusters.
+- `n_papers` is how many distinct publications document that cell-type NAME in the whole
+  resource for this species. It says how established the name is, not whether it fits
+  here. A name with few papers can still be right; it just needs its own evidence rather
+  than the reader's familiarity.
+- `own_vs_shared` splits the candidate's positive genes (panel rows and species-wide
+  definers together) by whether another candidate on this page curates them: `own` are
+  the genes no other candidate here claims, most separating first, with `own_total`;
+  `shared` are the rest, each naming after `~` the candidates it is shared with. Each
+  gene reads `GENE n<pub> <pct_in>/<pct_out>`, `!` where not raised. Sharing with the
+  candidate's own parent or child on the page is ordinary and shows here like any other
+  sharing, so a parent whose every gene its children also carry reads `own_total` 0 --
+  that is not absence. What the table is for is the NEIGHBOUR case: before choosing
+  between two candidates that are siblings or poles, read which genes each has that the
+  other does not (the `~` names say so), and weigh only those. After a contested answer
+  the same fact comes back as `pair_partitions`: for each disputed pair, `only_<A>`,
+  `only_<B>` and `both`, as measured here.
+- `retrieval_rank` and `tier` are where the candidate sits in the retrieval order. The
+  order is built from marker overlap, not from biology, and leading it is not evidence.
+
+`exclusion_sources` holds the curated publication sentences behind each negative marker
+this cluster detects, keyed by gene. It is empty for a candidate whose negative markers
+are undetected, and empty for a detected one the resource carries no sentence for. Every
+sentence, here and from the `sources` tool, carries `n_pub` for its (identity, gene) pair
+and `single_study`, true when that pair rests on one publication.
+
+`unmeasured_curated_genes` counts the identity's curated positive markers this dataset
+did not measure; they are neither evidence for it nor against it. `program` gives the
+median of the candidate's per-cell marker program inside and outside the cluster.
+
+`borrowed_context` on a candidate marks one that retrieval did not offer from this
+tissue's menu: its panel and its sentences come from every tissue context of this species
+that documents it (counted in `tissue_contexts_documenting_type`; `source_tissues` lists
+those behind its anchors). It was admitted because dominant enriched genes of this cluster
+that no candidate of this tissue's menu claims (`anchor_genes`, each detected in half the
+cluster or more) are its replicated markers there, and it was ranked among such
+candidates by the same marker-level and cluster-level scores the retrieval order is built
+from; `native_best` is the native candidate covering most of those anchors, shown as
+context. Its `flat_or_undetected_curated_genes` are curated markers measured in this
+dataset but flat or undetected in this cluster. It competes on exactly the same terms as
+every other candidate: read its rows.
+
+`cluster_markers` is the same measurements keyed the other way round: one row per gene
+this cluster raises significantly, ordered by the contrast between `pct_in` and `pct_out`,
+widest first, and `claimed_by` names EVERY candidate above whose tissue panel curates the
+gene together with its `n_pub` for it; `also_curated_species_wide` adds the candidates of
+this page the species' literature ties the gene to under other tissues. A candidate's
+panel shows one claimant of a gene; this shows all of them, so how widely a gene is
+shared is visible on the row where it is read. It carries the strongest rows only and
+adds nothing: every row is already in some candidate's panel, and the panels remain the
+complete record of each identity.
+
+No reference label, ground truth or author annotation is supplied. Numbers come from one
+differential-expression table, so they are comparable across candidates.
+
+# Reading the panels
+
+{{PANEL_READING}}
+
+[R4] Compare identities on the CONTRAST between `pct_in` and `pct_out`, not on `pct_in`
+alone. A gene detected in most cells here and in most cells outside separates nothing.
+`cluster_markers` lays that comparison out directly: whether a gene separates the
+candidates of this cluster is visible on its row, in how many of them claim it.
+
+[R5] Read each candidate's panel AS A WHOLE. One raised marker is not an identity, and
+the size of a panel -- how many rows it holds or how many of them are significant -- is
+not a comparison between candidates; the question is which candidate's overall pattern
+these cells match, weighing each gene by what it does here and by what the literature
+actually claims for it, an unraised defining marker included by [R2]. This is the
+standard the reviewer applies to your answer, so it is the standard to answer by.
+
+[R6] Curated names are free text, so several candidates routinely denote ONE cell:
+synonyms, spelling variants, an anatomical or disease qualifier on the same cell, or the
+same cell at a different granularity. Recognise that before comparing, and treat only
+genuinely DIFFERENT identities as competing.
+
+[R7] Within one such set the names sit at different levels: a plain LINEAGE name and
+FINER names that add something to
+it -- a standard subtype, an activation or polarization state, a maturation or transitional
+stage, an anatomical zone or vessel segment, a functional program, a donor or disease
+origin, or a name one study coined for its own subpopulation. Deliver the MOST ACCURATE
+level, which is not the same as the most specific one you can defend. A finer name is
+right where the genes that distinguish it from its parent are a substantial and coherent
+part of what these cells show; it is wrong where the strong signal comes from genes the
+parent lineage explains just as well, and wrong where its own distinguishing markers sit
+in a small minority of the cells while the parent's cover most of them. Equally, do not
+retreat to an umbrella term that the
+evidence has outgrown, and do not discard a cleanly carried standard cell type because
+some of its markers are shared. Where the evidence separates no finer than a lineage, the
+lineage is a complete answer and that is not a failure.
+
+[R8] Several identities' markers in one cluster. This is the ordinary case, not the
+exception, and it is read in a fixed order:
+
+  (a) Sort what the cluster carries into what the cells ARE and what they DO.
+  `program_reading` has done the first pass: a `one_lineage` program places the cells; a
+  `several_lineages` program says what they are doing and
+  can be run by more than one of the candidates on this page. State programs are neither.
+
+  (b) A program several lineages run cannot choose between the lineages that run it --
+  however many cells carry it, however strong its contrast, and however a study named
+  its cluster by it. Two candidates that both run such a program
+  are told apart ONLY by their own lineage genes: the genes
+  under `own` in each one's `own_vs_shared`, read with the sentences. What is under
+  `shared` between them is evidence for neither against the other. It is evidence for
+  the family that shares it: where that program occupies these cells, the cells are in
+  that family, and a candidate from another lineage is not `selected` over the family
+  for holding genes no family member shares -- its unshared program outranks the
+  family's only where the family's genes are absent or a minority here.
+
+  (c) `selected` is the identity whose OWN lineage genes stand in these cells -- own
+  against another lineage means unshared with it; own within its family means the
+  family's program, whether or not siblings and poles share it -- not the candidate with
+  the larger panel, nor the one with more shared genes, nor the one whose several-lineage
+  program covers more cells. A candidate whose own lineage genes are near zero here and
+  peak in another cluster of this dataset is not `selected` on the genes it shares with
+  its neighbour, even where the resource's own sentences for that tissue name the shared
+  genes as its markers.
+
+  (d) Where two candidates are siblings or the two poles of a continuum and only ONE of
+  them has its own lineage genes in these cells, that one is `selected` and the other is
+  not a second population: a shared program read twice is one population, and the
+  co-occurring list is not where an unestablished pole goes. Where BOTH have their own
+  lineage genes, each in its own share of the cells, report both -- the one carried by
+  the larger share as `selected`, the other under [A5] -- and the majority is read from
+  the fraction of cells carrying each side's OWN genes, not from curated row counts.
+  Where neither separates and their common parent is on the page, deliver the parent.
+  Where neither separates and no parent is on the page, `Unknown` is the honest answer
+  for this tier, and the next tier may hold the parent.
+
+  (e) Markers of a clearly different lineage raised in a substantial share of the cells
+  mean the cluster carries
+  more than one population: report the other one under [A5] on its own lineage genes.
+  Genes a different lineage merely shares with this one do not make it a second
+  population, and neither does a state program.
+
+[R9] Activation, inflammation, stress, maturation, proliferation and cell-cycle programs
+are states, not cell types. A proliferation program contradicts a delivered name only
+where that name itself asserts a non-dividing cell; otherwise it belongs in `state` and
+does not move the identity. A terminal-differentiation program is evidence for the
+terminal type it builds, not against a mature name.
+
+[R10] Tissue. The dataset context at the top names the species, tissue and disease these
+cells were taken from, and every name you deliver -- `selected`, `subtype` or co-occurring
+-- asserts that this cell type is present in that sample. A cell type that occurs across
+many tissues is settled by its genes alone. The question is the SAMPLE, not the named
+organ's parenchyma alone: a dissection carries what covers and adjoins the organ, what
+traverses it, and what ordinary sampling of it commonly takes with it. A name whose type
+has that route is settled by the genes that distinguish it from the other candidates on
+this page; its own defining program identifies the cells. A name that denotes specialised
+parenchyma of an organ beyond that reach, or another organ's resident form of a lineage,
+with no route from this sample's dissection, disease or developmental stage, is
+deliverable only on evidence that does not rest on that program: sentences documenting the
+sampled tissue as holding this type, a dataset context that brings such cells in, or
+measurements other than the program. Absent that, do not deliver the name: deliver the
+sampled tissue's lineage whose own program these cells carry -- its plain name where the
+page holds one -- or `Unknown` where no candidate carries one. `reason` says which case
+this is. Which tissue's menu a candidate was retrieved from decides nothing here.
+
+# Asking for more evidence
+
+Return `{"action":"query","tool":"<name>","args":{...}}` to call one of exactly these
+tools. Use no other name. The result is appended and you answer again.
+
+- `sources` -- args `{"candidate":"<exact candidate name>","genes":["GENE",...]}`.
+  The curated publication sentences tying those genes to that cell type in this species,
+  tissue and disease context. Up to twelve genes per call. Ask where a call turns on what
+  the literature establishes about a gene, or where you doubt a curated marker applies to
+  this context. A gene's sentences are not ranked best-first: the resource holds one
+  publication count for the whole marker, so what you receive is a few of however many
+  exist. Ask again for the same gene and you receive the NEXT ones, never the ones you
+  have read. `not_yet_shown` says which genes still have sentences behind them.
+- `gene_across_clusters` -- args `{"gene":"GENE"}`. That gene's `pct_in` and `pct_out`
+  in EVERY cluster of the dataset. Use it to tell a marker specific to these cells from
+  a program shared with a neighbouring cluster or detected throughout the tissue.
+- `candidates_with_gene` -- args `{"gene":"GENE"}`. Which of THIS cluster's candidates
+  curate that gene, with their `n_pub`. Use it before calling a gene decisive.
+
+Before delivering a name that asserts one pole of a pair on this page -- one of two
+neighbouring lineages, a progenitor against a mature type, one end of a continuum -- read
+that pole's `own_vs_shared` and ask `sources` and `gene_across_clusters` about the genes
+under its `own`, not about the ones under `shared` with the other pole. A pole whose `own`
+genes are unraised here and peak in another cluster is not carried by the shared ones,
+and the sentences behind the shared ones -- however clearly they name the pole -- are
+sentences about a program both poles run.
+
+Repeating any other call with identical arguments returns the same observation and tells
+you nothing new; ask something else or answer. `sources` is the exception: repeating it
+draws the sentences you have not seen.
+
+# What happens after you answer
+
+Every identity you claim is first put through a definer audit: a separate reading of that
+identity's species-wide definers as measured here, asking whether its own defining
+program occupies these cells, whether a fine distinction the name asserts against a page
+neighbour is established, and whether a rival's program occupies the cluster instead.
+Then your answer goes to a reviewer that reads the whole panel of every identity you
+claimed together with the curated sentences behind every row of it and those audits, and
+returns one of two verdicts on your identity, where you named a finer name one on whether
+that finer name is separable from the name you delivered it under, and for every
+co-occurring identity you reported and every rival the audit read as sharing these cells
+a reading of whether it is a second population here. A refusal, or a reading of the
+population set that does not match your list, comes back as an observation with the
+genes and the sentences it turned on, and you answer again. Re-delivering the same answer
+after a refusal ends the rounds and sends the cluster to arbitration.
+
+If nothing on your page is carried by its own evidence, answer `Unknown` and say in
+`reason` which measurements nothing accounts for. That is not a failure and it is not the
+end of the cluster: the next candidates in the retrieval order are then added to this
+page, with their whole panels, and you answer again with more to choose from. It is also
+the answer where two candidates cannot be separated on their own genes and the page holds
+no common parent for them ([R8d]). It is NOT the answer for a cluster that is merely
+mixed -- report the populations -- nor for a pair that IS separable on its own genes.
+
+# Answering
+
+Return `{"action":"final", ...}` with these fields:
+
+[A1] `selected` is the identity the whole of the evidence best supports, named exactly as
+one of the supplied candidates, at the level [R7] reaches -- or `Unknown` as described
+above.
+
+[A2] `lineage` repeats `selected`, unless your answer sits below a plainer candidate that
+denotes the same cell, in which case it names that plainer candidate. It records what the
+answer falls back to if the finer level does not hold; nothing is demoted on your behalf.
+
+[A3] `subtype` is a finer cell type within the same identity as `selected`, or the empty
+string. Name one only where [R7] carries it and no detected exclusion of it argues
+otherwise. Prefer an empty `subtype` to one the evidence does not separate: `selected` is
+a complete answer. `possible_refinements` collects the finer candidate names this cluster
+hints at but does not carry -- it costs nothing to be wrong there, so a name you
+considered and rejected on the evidence belongs there rather than in `selected`. Both must
+be candidate names.
+
+[A4] `state` is free text for what these cells are DOING, by [R9]. It is what the
+measurements show, never a label copied from elsewhere -- this package is reference-free,
+and a study's own cluster name is the one thing that must not enter the output. A state is
+never a subtype and never replaces `selected`; where a candidate name describes a state
+rather than a cell type, report the state here and the cell type in `selected`.
+
+[A5] `co_occurring_identities` lists the OTHER identities the cluster also carries, by
+[R8]. Each must stand on its OWN lineage genes (`own` in its `own_vs_shared`) in its own
+share of the cells. An identity resting on markers it shares with `selected`, on a state
+program, or on a several-lineage program `selected` also runs is that same population
+read twice, not a second one -- and an unestablished pole is not made honest by being
+listed here.
+
+[A6] `claim_evidence` carries one entry for `selected`, one for `subtype` if you gave one,
+and one for EVERY co-occurring identity. Each names a `decisive_gene` from that identity's
+own panel and copies that gene's `pct_in` and `pct_out` exactly as shown. Prefer a
+replicated pairing: a `decisive_gene` with `n_pub` 1 is one study's observation, it will be
+reported as such on the record, and where the identity has a replicated marker to point at
+that is the one to quote.
+
+[A7] `support_markers` are genes listed for `selected`, or for `subtype` when you deliver
+one. Invent no name, gene or number.
+
+[A7b] `program_fit` maps the identity-bearing programs of `program_reading` -- the ones
+under `programs`, not the `state_programs` -- onto what you are delivering: one entry per
+program, naming the program by its `function` exactly as the reading wrote it, and saying
+which identity you claim accounts for it (`selected`, the `subtype`, a co-occurring one),
+or `unexplained` where none of them does. You are not asked to account for every
+genome-wide gene. You are asked whether the
+programs an earlier reader found in these cells are the ones your answer describes, which
+is a different question. A program is mapped to a co-occurring identity only where that
+identity's own lineage genes stand in their own share of the cells ([A5]); a program no
+claimed name accounts for is `unexplained`, a fact recorded beside the answer. Neither is
+a reason to move `selected` to the name that claims the program while the family program
+of `selected` occupies these cells ([R8b]).
+
+[A8] `reason` states why `selected` is this identity and on which contrast, why the most
+serious competing IDENTITY was rejected and on which measurement, what any unraised
+high-`n_pub` markers of the selected identity mean here by [R2], what any detected
+exclusion of the identity you SELECTED means -- not only the ones you rejected -- and what
+shows a co-occurring identity occupies different cells.
+
+[A9] `confidence` is `high` where several of the identity's own markers separate this
+cluster sharply and no competing identity explains them, `medium` where the identity is
+clear but the level or a competing identity is not settled, `low` where the panel is
+flat or split between identities.
+
+# Schema
+
+Query turn:
+
+{"action":"query","tool":"sources|gene_across_clusters|candidates_with_gene","args":{}}
+
+Final turn:
+
+{"action":"final","schema_version":"cluster-annotator-v2","selected":"exact_candidate_name|Unknown","lineage":"exact_candidate_name_or_same_as_selected","subtype":"exact_candidate_name_or_empty_string","possible_refinements":["exact_candidate_name",...],"state":"free-text cell state or empty string","co_occurring_identities":["exact_candidate_name"],"claim_evidence":[{"identity":"exact_candidate_name","decisive_gene":"listed_gene","pct_in":0.0,"pct_out":0.0}],"support_markers":["listed_gene"],"program_fit":[{"program":"the function string from program_reading","accounted_for_by":"exact_candidate_name|unexplained"}],"confidence":"high|medium|low","reason":"the explanation required by [A8]"}
+
+EVIDENCE_PACKET_JSON={{EVIDENCE_PACKET_JSON}}

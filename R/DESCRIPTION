@@ -1,0 +1,39 @@
+Package: scmarkeragent
+Title: Evidence-Grounded Cell-Type Annotation for Seurat Objects
+Version: 0.1.0
+Authors@R: c(
+    person("Haoran", "Chen", role = c("aut", "cre"),
+           email = "chenhaoran@stu.njmu.edu.cn"),
+    person("Chen", "Cao", role = "aut", email = "caochen@njmu.edu.cn"))
+Description: Annotates single-cell RNA-seq clusters by measuring curated marker
+    panels in the data and letting a language model decide which identity those
+    measurements support, with every claim resolving to a publication and its
+    source sentence. Reads Seurat .rds objects natively and runs from raw counts,
+    against one shared configuration, one set of prompts and one marker resource.
+License: file LICENSE
+Encoding: UTF-8
+Depends:
+    R (>= 4.2)
+Imports:
+    curl,
+    data.table,
+    digest,
+    ggplot2,
+    jsonlite,
+    Matrix,
+    presto,
+    scales,
+    Seurat (>= 5.0.0),
+    tools,
+    utils,
+    zip
+Suggests:
+    ggrastr,
+    httpuv,
+    later,
+    png,
+    promises
+Additional_repositories: https://haoran-code.r-universe.dev
+URL: https://github.com/HaoRan-Code/scMarkerAgent, https://haoran-code.r-universe.dev/scmarkeragent, https://doi.org/10.5281/zenodo.22812457
+BugReports: https://github.com/HaoRan-Code/scMarkerAgent/issues
+Config/roxygen2/version: 8.0.0
