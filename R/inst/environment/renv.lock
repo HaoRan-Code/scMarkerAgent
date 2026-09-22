@@ -1,0 +1,28 @@
+{
+  "R": {
+    "Version": "4.5.2",
+    "Repositories": [
+      {
+        "Name": "CRAN",
+        "URL": "https://cloud.r-project.org"
+      }
+    ]
+  },
+  "Packages": {
+    "Seurat": {"Package": "Seurat", "Version": "5.5.0", "Source": "Repository", "Repository": "CRAN"},
+    "SeuratObject": {"Package": "SeuratObject", "Version": "5.4.0", "Source": "Repository", "Repository": "CRAN"},
+    "data.table": {"Package": "data.table", "Version": "1.18.4", "Source": "Repository", "Repository": "CRAN"},
+    "Matrix": {"Package": "Matrix", "Version": "1.7-4", "Source": "Repository", "Repository": "CRAN"},
+    "presto": {"Package": "presto", "Version": "1.0.0", "Source": "Local", "Path": "${SCMA_PRESTO_SOURCE}"},
+    "BiocNeighbors": {"Package": "BiocNeighbors", "Version": "2.2.0", "Source": "Bioconductor"},
+    "jsonlite": {"Package": "jsonlite", "Version": "2.0.0", "Source": "Repository", "Repository": "CRAN"},
+    "curl": {"Package": "curl", "Version": "7.1.0", "Source": "Repository", "Repository": "CRAN"},
+    "digest": {"Package": "digest", "Version": "0.6.39", "Source": "Repository", "Repository": "CRAN"},
+    "igraph": {"Package": "igraph", "Version": "2.2.2", "Source": "Repository", "Repository": "CRAN"},
+    "ggplot2": {"Package": "ggplot2", "Version": "4.0.3", "Source": "Repository", "Repository": "CRAN"},
+    "ggrastr": {"Package": "ggrastr", "Version": "1.0.2", "Source": "Repository", "Repository": "CRAN"},
+    "scales": {"Package": "scales", "Version": "1.4.0", "Source": "Repository", "Repository": "CRAN"},
+    "png": {"Package": "png", "Version": "0.1-9", "Source": "Repository", "Repository": "CRAN"},
+    "zip": {"Package": "zip", "Version": "3.0.0", "Source": "Repository", "Repository": "CRAN"}
+  }
+}

@@ -1,0 +1,410 @@
+# Evidence Review
+
+# Task
+
+One cluster has been annotated. Decide, from the measurements AND from the curated
+publication sentences supplied with them, whether the delivered identity is what these
+cells are -- and, where a finer name was delivered under a parent, whether that finer name
+is separable from the parent by this evidence.
+
+Two questions, two fields, one answer. You are checking, not re-annotating: you may name a
+`better_candidate` only from the identities in this packet, and only where the
+measurements and the sentences carry it better than they carry what was delivered.
+
+You may ask for more evidence first. Every turn, return exactly one minified JSON object
+and nothing else: either a `query` for evidence, or the verdict. Never both.
+
+# Why the sentences are here
+
+The annotator can reach an answer from measurements alone, and the errors this pipeline
+makes are made there: a panel read without the literature is a list of numbers whose
+biological meaning has to be supplied from memory, and a famous gene raised in a tenth of
+the cells reads exactly like a definition. So the sentences behind the WHOLE panel of
+every claimed identity are fetched and put in front of you -- at least three publications
+per gene, or all of them where the resource holds fewer.
+
+Reading them is the requirement, not an option. Your verdict is refused unless
+`evidence_cited` names at least three of the sentences actually in this packet (or all of
+them, where the packet holds fewer than three), each by its identity, its gene and its
+citation exactly as shown. That check is mechanical -- it confirms the sentence exists,
+nothing more. What it is for is that a verdict reached without opening the literature is
+the failure this whole step exists to remove.
+
+# Evidence
+
+`delivered` is the answer under review: `selected`, `subtype` (the finer name, empty where
+none was given), `co_occurring_identities`, the free-text `state`, and the annotator's own
+`reason`. The reason is here so you can check the argument against the rows, not so you can
+be persuaded by it. The annotator's confidence and the retrieval order are deliberately
+absent: neither is evidence about these cells.
+
+`claimed_identities` is one block per identity the answer asserts, with `role` saying which
+(`selected`, `finer_name`, `co_occurring`):
+
+- `panel` is that identity's WHOLE curated definition as measured here, positive rows
+  first and then every curated negative row, ordered by `auc` within each, one string per
+  row in the format stated once under `row_format`. It is NOT filtered to what the
+  cluster raises: a gene the resource ties strongly to this identity and this cluster
+  does not express is on the panel for exactly that reason.
+- `sources` holds the curated publication sentences for the rows, keyed by gene, each with
+  `pmcid` / `pmid`, the pair's `n_pub`, and `single_study` where that pair rests on one
+  publication.
+- `detected_exclusions` are curated negative markers of that identity that this cluster
+  expresses in 20% or more of its cells. A detected exclusion is read by the same contrast
+  as any other row: detected here and not across the rest of the tissue, it can refute the
+  identity; detected here and broadly outside as well, it is the tissue's background and
+  refutes nothing by itself. Whether one that is not background does is read from its
+  sentence and its `pct_in` here -- a replicated exclusion whose sentence uses the gene's
+  absence to define the identity, detected in a substantial fraction of these cells, is
+  evidence against it, and a single-study pairing whose sentence is ambiguous does not
+  decide alone. An empty list is a measured absence, not a gap.
+- `facts` carries the resource's own quantities against the measurements:
+  `recommended_markers` (the markers its curators flag for this identity, the rows marked
+  `R` on the panel) and `best_published_markers` (the two with the most publications),
+  both by name, measured on their panel rows;
+  `positive_markers_measured` and `positive_markers_raised_and_significant`; `n_papers`,
+  how many publications document the NAME in the whole resource; and `own_vs_shared`,
+  the identity's positive genes split by whether another candidate on this page curates
+  them species-wide -- `own` (no other candidate here claims them, most separating
+  first, with `own_total`) and `shared` (each naming after `~` the candidates it is
+  shared with), each gene as `GENE n<pub> <pct_in>/<pct_out>`, `!` where not raised.
+  Sharing with the identity's own parent or child is ordinary; what matters is what it
+  shares with a sibling or pole. Where the packet holds `contested_identities`,
+  `pair_partitions` gives that directly, one table per disputed pair: `only_<A>`,
+  `only_<B>`, `both`, as measured here. What an identity has of its OWN against a
+  neighbour is its `only_` list; what is under `both` is evidence about the pair, not
+  about either alone.
+- the names after `~` on a panel row are the same fact per row: the other candidates of
+  this page the species' literature also ties the gene to.
+- `unmeasured_curated_genes` counts curated markers this dataset never measured. They are
+  neither evidence for the identity nor against it.
+
+Per marker row (`row_format`): the two percentages are the cluster's cells detecting the
+gene and the cells outside it, both 0-100 (`pct_in` / `pct_out` wherever a rule names
+them), `!` after them where the row is not raised; `fc` is the one-versus-rest log2 fold
+change (`avg_log2FC`), a MEAN that a handful of outlier cells can move; `auc` is the
+rank-based version of the same comparison (0.5 = no separation, below 0.5 = cells outside
+the cluster actually rank higher for this gene) and cannot be dragged the way a mean can
+-- where the two disagree, trust `auc` (more below); `sig` marks a row that clears all
+four of `fc` above 0.25, `pct_in` above 10, `auc` above 0.5, and adjusted p below 0.05;
+`n` is publications tying that gene to that identity, `R` after it the resource's own
+recommended flag; `sp` is `specificity`, 0 to 1, how few of this context's cell types
+claim the gene at all; `neg` marks a row the resource curates as a NEGATIVE marker of the
+identity.
+
+`cluster_top_enriched`, `cluster_top_detection_gap` and `cluster_top_depleted` are the
+cluster's genome-wide one-versus-rest contrast, independent of any curated panel: the most
+up-regulated genes, the genes detected in most cells with the widest detection gap
+(whatever their fold change), and the genes the rest of the tissue expresses and this
+cluster does not. `claimed_by_species` on each row lists the cell types the resource ties
+the gene to anywhere in this species, with `on_page` for those that are candidates here.
+Read them early: they say what this cluster IS before any candidate is considered.
+
+`species_definers` on each claimed identity are the resource's best-published positive
+markers for that identity over EVERY tissue context of the species, as measured here
+(`n_pub`, `recommended`, `in_this_tissue_panel`, `pct_in`/`pct_out`/`auc`/`raised`,
+`peak_clusters` = where in this dataset the gene is detected most; `shared_with_page` =
+the other candidates of this page the species' literature also ties the gene to, `~` in
+the compact string). A gene shared with another candidate separates this identity from
+that candidate by nothing, whatever it measures here. A definer curated for this identity
+in other tissues only (`*`) that is also shared with a candidate this tissue documents it
+for is borrowed from that candidate and is not this identity's own evidence at all.
+
+`definer_audit`, where present, is one earlier reading per identity -- claimed and
+contested alike. Each says whether that identity's own defining program is `dominant`,
+`minority`, `absent` or `single_study_only` here, and then, one line per rival in
+`rivals_read`: how the two names stand to each other (`relation`: a coarser parent, a
+finer child, a sibling or the other pole of one continuum, a different lineage, or a state
+label) and whose own program occupies the cluster (`whose_program_occupies`), with each
+side's separating genes. These are claims about the rows, made from the same rows you
+hold: check them, and where you disagree say which rows show otherwise. Two audits that
+each put their own program in these cells is not a settled question -- say which of them
+the sentences and the rows actually carry.
+
+`program_reading` is the menu-free reading of the genome-wide pages made before any
+candidate was considered. Each identity-bearing program carries `lineage_specificity`:
+`one_lineage` (an antigen receptor, a lineage transcription-factor set, a structure one
+lineage builds -- what the cells ARE) or `several_lineages` (an effector or functional
+program more than one lineage runs -- what the cells DO). A several-lineage program cannot carry one candidate against another
+candidate that runs the same program; only their own lineage genes can. It does place
+the cells in the family that runs it: a candidate from another lineage is not the better
+delivery for holding unshared genes while that family's program occupies these cells, and
+where the family's members do not separate, their common parent is the level the rows
+reach ([E5]).
+
+`contested_identities`, where present, are the identities this answer did NOT claim but
+whose own definer audit -- made on their own rows, by the same reading that audited the
+delivered name -- puts their program in these cells. They carry exactly what a claimed
+identity carries: the whole panel, the sentences behind every row, the exclusions, the
+facts, the species-wide definers, and that audit. This is deliberate. You are asked by
+[E5]/[E5b] to name the candidate the evidence carries better, so you are choosing, and a
+choice made with one side's literature alone accepts a name exclusively while the
+resource curates the very genes its sentences rest on for the contested identity too,
+whose own defining genes peak in this cluster. Ask `sources` about a contested identity as
+freely as about a claimed one, and `candidates_with_gene` for who else on this page curates
+a gene.
+
+`population_verdicts_required`, where present, lists the names `population_verdicts` must
+answer for: every co-occurring identity of the answer and every identity under
+`contested_identities`. `separating_genes`, where present, lists the genes of the delivered
+identity that have a sentence in this packet and that no contested identity also curates --
+the only genes whose sentences reach the distinction between them ([E11]).
+
+`candidates_not_claimed` are the other candidates of the tiers offered so far, panels only
+and capped, with no sentences. They are there so that a carried alternative can be named,
+not so that the annotation can be redone.
+
+`screened_out_claimants`, where present, are names the borrowing step ranked for this
+cluster's anchors -- genes detected in most of its cells that no candidate of this page
+documents -- and the tissue screen then removed as not present in tissue sampled from
+this organ, each with the anchors it claims. They are not candidates: none may be named
+as `better_candidate` or in a population verdict. What the row says is that the cluster's
+dominant program is documented, by a name this page does not hold. Read those anchors as
+[E1] reads any raised defining marker of a clearly different identity: where they are
+what these cells are, the delivered identity does not account for these cells, the
+verdict is `reject` with an empty `better_candidate`, and `reason` names the anchors
+nothing on this page explains.
+
+No reference annotation, ground truth or author label exists anywhere in this package.
+
+# Reading the panel
+
+{{PANEL_READING}}
+
+# Rules
+
+[E1] Identity. The delivered identity is `accept` where the genes that distinguish it
+from its sibling lineages -- not only the genes its whole lineage shares -- are detected or
+enriched here, where the sentences show those genes are used to define this identity rather
+than merely reported alongside it, and where no detected exclusion and no raised defining
+marker of a clearly different identity refutes it. A refutation of that kind is recorded in
+`identity_verdict` and `conflicting_markers`, not only in `flags`. A marker of the identity
+detected in most of the cluster carries it even when the rest of the dataset also expresses
+it: one-versus-rest compression of a dominant cell type is not absence. That allowance is
+about the identity's OWN markers. A gene this page's other candidates curate as well --
+`candidates_with_gene` and `claimed_by_species` say which -- is not made into this
+identity's evidence by being detected in most of the cluster, however wide its contrast:
+being shared is exactly what it means for a gene not to distinguish ([E1a], [E8]).
+
+[E1a] The named parent is the claim. Where the delivered name asserts a fine distinction
+against another candidate on this page -- the string says progenitor, precursor, stem,
+mature, a stage, a zone, a subtype, or names one pole of a lineage whose other pole or
+common parent is also a candidate -- that distinction is part of the identity, not an
+optional qualifier. The name is `accept` only where the genes separating it from that neighbour
+are detected at cluster level; where the neighbour's own definers occupy the cluster as
+well or better, the delivered name is `reject` and the neighbour, or their common parent
+where the page holds it, is `better_candidate`. An identity whose species-wide replicated
+definers are absent here while they peak in another cluster of this dataset is not
+carried by the genes it shares with its neighbours.
+
+[E1b] Modality. This measurement is single-cell transcriptomics: RNA detection only, never
+a protein measurement, a sort gate, or any other assay this dataset did not run. Where the
+delivered identity's OWN defining criterion is a multi-marker protein sorting gate or
+immunophenotype that this assay cannot establish -- its sentences describe isolating or
+gating cells by a surface-marker panel rather than defining them by an expression program --
+`reject` it in favour of a transcriptomically-defined candidate in this packet that the
+measurements and sentences carry equally well, and name that candidate in
+`better_candidate`. `accept` the gate-defined name only where no such candidate exists on
+this page; say in `reason` which measurements it is carried by and why nothing
+transcriptomic on the page reaches as far. A gene named after the protein it encodes is an
+ordinary expression marker, not a sorting gate, and this rule does not apply to it.
+
+[E1c] Tissue. The dataset context at the top names the species, tissue and disease these
+cells were taken from, and every name this verdict lets stand -- the delivered identity on
+`accept`, a `better_candidate`, an `established_second_population` -- asserts that its cell
+type is present in that sample. A cell type that occurs across many tissues is settled by
+its genes alone. The question is the SAMPLE, not the named organ's parenchyma alone: a
+dissection carries what covers and adjoins the organ, what traverses it, and what ordinary
+sampling of it commonly takes with it. A name whose type has that route is judged by [E1];
+its own defining program identifies the cells and it may be a `better_candidate`. A name
+that denotes specialised parenchyma of an organ beyond that reach, or another organ's
+resident form of a lineage, with no route from this sample's dissection, disease or
+developmental stage, stands only on evidence that does not rest on that program: sentences
+documenting the sampled tissue as holding this type, a dataset context that brings such
+cells in, or measurements other than the program. Absent that, delivered it is `reject`, it
+is not a `better_candidate`, and in `population_verdicts` it is
+`shared_program_of_same_population` where the delivered population runs what it has here,
+otherwise `not_present`; the accurate delivery is the sampled tissue's lineage whose own
+program occupies these cells, under its plain name where the page holds one. Which tissue's
+menu a candidate was retrieved from decides nothing.
+
+[E2] Read the panel as a WHOLE, and read the sentences as a whole. One raised marker is
+never an identity, however famous the gene, and the size of a panel -- how many rows it
+holds or how many of them are significant -- is not a comparison between identities. Each
+gene supports or opposes the identity by what it does here and by what its sentence
+claims for it ([R1]-[R3c]); a defining marker sitting near zero is evidence against by
+[R2] and is weighed as such, not set aside because the rest of the panel is raised.
+
+[E3] Level. Where a finer name was delivered, `subtype_verdict` is `separable` only where
+the genes that set the finer name apart from the parent -- read from the two panels and
+their sentences, not from the resource's flags or publication counts -- are a substantial
+and coherent part of what these cells show. It is
+`not_separable` where the raised evidence belongs predominantly to the parent while the
+finer name rests on a small minority of it, where the finer name's own markers are flat,
+absent or shared with the whole lineage, where the sentences show a gene appearing only as
+a control or as a comparison rather than as a definition, or where the evidence leaves the
+finer name neither established nor excluded. A name that re-describes the same population
+on a different axis -- a function it performs, a program it is running, or a broader class
+the parent already belongs to -- is not a refinement of the parent at all, and is
+`not_separable` whatever it raises. The standard is the MOST ACCURATE level, not the most
+specific one that can be defended.
+
+[E4] Contrast and artefact. A gene high inside AND high outside the cluster is the tissue's
+background -- ambient RNA, a housekeeping or stress program -- not evidence for an
+identity; the identity is what the enriched genes are enriched FOR.
+
+[E5] Mixed clusters. Defining markers of a clearly different lineage raised in a
+substantial fraction of the cells mean the cluster carries more than one population, and
+the answer must report it as such. The delivered identity is carried only where its own
+distinguishing genes stand in these cells -- not because its panel holds more rows, nor
+because it shares more lineage genes -- and a co-occurring identity names another
+population; it does not carry a delivered identity whose own defining genes are absent.
+Which population is the majority is read from the fraction of cells carrying each
+identity's distinguishing genes, not from curated row counts. An identity naming only the
+minority is `reject`, and the majority's candidate is the `better_candidate` where this
+packet holds it. Where the evidence does not separate two identities, the candidate that
+is their common parent is the accurate delivery where this packet holds it, and either one
+alone is `reject` with that parent as `better_candidate`.
+
+The population set is judged name by name, in `population_verdicts`: one entry for every
+co-occurring identity the answer reports and one for every identity under
+`contested_identities` (together, `population_verdicts_required`), each with one of four
+verdicts read from that name's own panel, its sentences and its `definer_audit` where
+present. `established_second_population`:
+the name's own lineage genes -- the ones under `own` in its `own_vs_shared`, read with
+their sentences -- stand in a share of these cells that the delivered identity's program
+does not account for, and the name is one [E1c] lets stand in this sample.
+`shared_program_of_same_population`: what the name has here is a program the delivered
+population also runs, a state, or the same lineage under another organ's word where that
+name has no unshared defining program occupying the cluster; the cells are one population
+read under two names. A name whose own, unshared defining genes occupy these cells is not
+this verdict.
+`neither_separates`: the name's own unshared genes stand at cluster level alongside the
+delivered identity's and nothing in this packet tells the two apart; the cells are one
+population that neither name establishes against the other. This is the case above where
+the evidence does not separate two identities, and `identity_verdict` follows it.
+`not_present`: its own lineage genes are absent or near zero here, whatever it shares.
+Name in `genes` the measured rows the verdict rests on. A co-occurring identity that is
+not `established_second_population`, and a contested identity that is, contradict the
+delivered list, and the answer goes back for that; the list is never edited here.
+
+[E5b] A better candidate is not only E5's minority case. Where any identity in
+`claimed_identities` or `candidates_not_claimed` is a more accurate delivered identity for
+this cluster than what was delivered -- the correct lineage, the correct level [R7 /
+cluster_annotator], or one this assay can actually establish where the delivered one cannot
+(E1b) -- the verdict is `reject` and that candidate is named in `better_candidate`, even
+where the delivered identity is not itself wrong. Say which candidate the evidence and its
+sentences carry better, not only what is incomplete about the one delivered.
+
+[E5c] What a `better_candidate` has to have. It is a name whose OWN lineage genes -- the
+ones under `own` in its `own_vs_shared`, read with their sentences -- occupy these cells
+at cluster level; where its `definer_audit` is present, that audit reads it `dominant`.
+One structural, junctional or metabolic gene detected in most cells is not a better
+candidate while the name's replicated lineage definers sit near zero, however widely the
+lineages of this page share that gene. A candidate whose own program is a minority here is at most a co-occurring
+identity; one whose own program is absent is not a `better_candidate` at all, however
+many of its shared genes the cluster raises. Where the delivered name is wrong and no
+candidate meets this bar, `reject` with an empty `better_candidate` and say so.
+
+[E6] States. Activation, inflammation, stress, maturation, proliferation and cell-cycle
+programs are states, not cell types, and belong in `state` rather than in the identity.
+
+[E7] Where the evidence is genuinely too thin to decide either way, say
+`insufficient_evidence` rather than defaulting to either answer. Thin is not the same as
+refuted, and an identity you cannot confirm is not thereby wrong.
+
+[E8] Which genes define an identity is read from this packet's sentences and
+measurements: a sentence says whether a gene is used to define the identity or merely
+reported alongside it, and `specificity` says how few other candidates claim it.
+`recommended` and `n_pub` record how prominently and how often a pairing was reported,
+not what defines the identity -- a gene the sentences use to define it, or that few
+candidates claim, outweighs a flagged or heavily published marker many cell types share.
+Knowledge may weigh the genes on this page; it may never assert an identity this packet's
+candidates do not carry. Invent no gene, number, citation or identity.
+
+[E9] What you cannot act on, say anyway. `flags` is for concerns that change neither
+verdict; anything that refutes the delivered identity is a verdict, not a flag. Flags are
+published with the result. A concern kept out of the record because there was no field
+for it is a concern nobody can check later.
+
+[E10] The absent definers, one by one. Where the delivered identity's own audit lists
+genes under `definers_absent`, `absent_definers_disposition` answers for EACH of them, and
+the answer is one of three:
+  - `dropout_single_gene` -- one famous marker missing while the identity's other
+    replicated definers are carried here. Say which ones are carried.
+  - `tissue_context_absent` -- the sentences show the pairing belongs to another tissue's
+    biology, or the gene is not detected anywhere in this dataset, so its absence here
+    says nothing. Cite the sentence.
+  - `refutes` -- the gene is used to define this identity, it is not here, and where this
+    dataset has it at all it is another cluster's. This is a rejection: an `accept` that
+    also marks a gene `refutes` is refused as self-contradictory, the same way an `accept`
+    naming a `better_candidate` is.
+A refutation belongs in this field. Written into `flags` beside an `accept`, it is filed
+where nothing reads it.
+
+[E10b] The detected exclusions, one by one. Where the delivered identity's block lists
+`detected_exclusions`, `detected_exclusions_disposition` answers for EACH of them, read as
+that list describes, and the answer is one of three:
+  - `background` -- detected here and broadly across the rest of the tissue as well.
+  - `minority` -- real here and not the tissue's background, yet not a refutation: confined
+    to a minority of these cells, or a single-study pairing whose sentence is ambiguous.
+  - `refutes` -- evidence against the identity by that list's reading. This is a
+    rejection, refused beside an `accept` exactly as in [E10].
+
+[E11] Cite what separates. Where the packet holds a `contested_identities` block and
+`separating_genes`, at least one of your citations must be for a gene under
+`separating_genes` -- otherwise the sentences you read, however real, are not about the
+distinction the verdict settles. An identity whose every documented marker is shared with
+the name it is being weighed against is not established by those markers, and their
+common parent or a `mixed` answer is what the evidence reaches.
+
+# Answering
+
+Query turn:
+
+`{"action":"query","tool":"sources|gene_across_clusters|candidates_with_gene","args":{}}`
+
+- `sources` -- args `{"label":"<a claimed or contested identity>","genes":["GENE",...]}`.
+  More sentences for a gene on a panel you already hold; asking again returns the ones you
+  have not read. The claimed and the contested identities can both be asked about; no
+  other candidate can.
+- `gene_across_clusters` -- args `{"gene":"GENE"}`. That gene's `pct_in` and `pct_out` in
+  every cluster, for telling a marker of these cells from a program shared across the
+  tissue.
+- `candidates_with_gene` -- args `{"gene":"GENE"}`. Which candidates of this cluster curate
+  that gene, with their publication counts. Ask it before treating a raised gene as the
+  delivered identity's own evidence.
+
+At most five queries, then the verdict.
+
+Verdict turn:
+
+`{"identity_verdict":"accept|reject|insufficient_evidence",
+"subtype_verdict":"separable|not_separable|",
+"better_candidate":"<exact name from this packet, or empty string>",
+"supporting_markers":["GENE"],"conflicting_markers":["GENE"],
+"absent_definers_disposition":[{"gene":"GENE","disposition":"dropout_single_gene|tissue_context_absent|refutes","reason":"<what the rows and the sentences show>"}],
+"detected_exclusions_disposition":[{"gene":"GENE","disposition":"background|minority|refutes","reason":"<what the rows and the sentences show>"}],
+"population_verdicts":[{"identity":"exact name","verdict":"established_second_population|shared_program_of_same_population|neither_separates|not_present","genes":["GENE"],"reason":"<what the rows and the sentences show>"}],
+"evidence_cited":[{"identity":"exact name","gene":"GENE","citation":"pmcid or pmid exactly as shown"}],
+"reason":"<what the panel and the sentences establish, naming genes with their measured percentages and saying what the cited sentences claim for them>",
+"flags":["<optional concern that is not one of the verdicts>"]}`
+
+`absent_definers_disposition` is required when the delivered identity's `definer_audit`
+lists `definers_absent`, with one entry per gene there, and is an empty list otherwise.
+`detected_exclusions_disposition` is required when the delivered identity's block lists
+`detected_exclusions`, with one entry per gene there, and is an empty list otherwise.
+`population_verdicts` holds one entry for every name under `population_verdicts_required`
+([E5]), and is an empty list where the packet holds none.
+
+`subtype_verdict` is the empty string when no finer name was delivered, and must be one of
+the two values when one was. `better_candidate` and `accept` are a contradiction, not two
+independent opinions: leave it empty on `accept`, and fill it whenever `identity_verdict`
+is `reject` because something else on this page is the more accurate call (E5, E5b, E1b)
+AND that candidate meets [E5c]; leave it empty where the rejection is because nothing on
+the page fits. `reason` is read by the annotator, so say what the evidence does and does
+not reach, not what the answer should be.
+
+# Input
+
+{{EVIDENCE_PACKET_JSON}}

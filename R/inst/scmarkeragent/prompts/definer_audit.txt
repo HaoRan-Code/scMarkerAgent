@@ -1,0 +1,192 @@
+# Definer Audit
+
+# Task
+
+ONE identity has been claimed for ONE cluster. Answer two narrow questions from the rows
+in this packet and nothing wider:
+
+1. Is this identity's OWN defining program the program that occupies these cells?
+2. For EACH rival on the page: how does its name stand to this one, and whose own
+   defining program occupies the cluster -- this identity's, the rival's, both, or
+   neither?
+
+You are not choosing a name and you are not reviewing the whole answer. The same questions
+are put separately about each rival, on ITS own rows, so two independent readings of the
+same cluster can be compared afterwards; answer only about the identity named here.
+
+Return exactly one minified JSON object and nothing else.
+
+# Evidence
+
+`identity` is the name under audit and `role` how it entered: `selected`, `subtype` or
+`cooc` (the answer claimed it), `better_candidate` (the reviewer prefers it), or
+`contested_rival` (another identity's audit read this one as occupying the cluster, so it
+is now being read on its own rows). The role says nothing about the answer you should give.
+
+`species_definers` are the resource's best-published positive markers for this identity
+over EVERY tissue context of the species, each with `n_pub` (publications for the
+pairing), `recommended` (the resource's flag), `in_this_tissue_panel` (whether this
+tissue's own panel held the gene at all), how this cluster measures it (`pct_in` /
+`pct_out` detection percentages 0-100, `auc`, `raised`), and `peak_clusters`, the
+clusters of this dataset where the gene is detected most ("cluster:pct_in"). A gene with
+`measurement` instead of numbers was not reported by the genome-wide screen
+(`below_reporting_screen` = measured, flat in every cluster) or is not in the matrix
+(`not_measured`). `shared_with_page` on a row names the OTHER candidates of this page
+that the species' literature also ties the gene to: a gene shared with a rival
+separates this identity from that rival by nothing, whatever it measures here. A gene
+curated for this identity in other tissues and never in this one is still this
+identity's gene -- unless it is also shared with a candidate whose own tissue rows hold
+it, in which case the identity is borrowing what that candidate documents. An identity
+carried by thin tissue-curated rows plus borrowed ones that all belong to another
+candidate of this page has that candidate's evidence read under the wrong name.
+
+`own_vs_shared` is the same split, summarised for the identity as a whole: `own` are its
+genes that NO other candidate on this page curates, most separating first, with counts;
+`shared` are the rest, each naming after `~` the candidates it is shared with. Each gene
+reads `GENE n<pub> <pct_in>/<pct_out>`, `!` where not raised. A parent whose genes its
+children on the page also carry reads `own_total` 0; that is sharing with its own
+children, not absence. The pair question is answered by `versus_identity` on each rival
+(below).
+
+`panel` is this tissue's curated panel for the identity as measured here, most
+separating row first (top rows only), one string per row in the format stated under
+`row_format`: the gene, `n` publications with `R` for the resource's recommended flag,
+the two detection percentages inside and outside the cluster (`!` where not raised),
+`fc` the log2 fold change, `auc`, `sp` the specificity, `sig` where the row clears the
+pipeline's gate, `neg` where the resource curates the gene as absent from this identity,
+and after `~` the other page candidates the species' literature also ties the gene to
+-- the same species-wide sharing as `~` on a definer row. `sentences` are curated
+publication sentences for the definers, keyed by gene, with `n_pub` and `single_study`.
+
+`borrowed_context`, where present on the identity or on a rival, says retrieval did not
+offer that name from this tissue's menu: its rows come from the organs that document it
+(`source_tissues`). Such a name is often another organ's word for a lineage this organ
+also has. Read
+the genes: a borrowed name whose separating genes are the very program this identity's
+lineage runs in THIS organ is the same population under another organ's name, not a
+second one.
+
+`rivals` are the other identities claimed for this cluster and the page candidates that
+claim this cluster's strongest genome-wide genes. Each carries the SAME evidence this
+identity does, so the two sides are comparable rather than one documented identity against
+a column of someone else's numbers: `species_definers` as compact rows
+("GENE n_pub[R][*] pct_in/pct_out[!] [~Name1,Name2]" -- `!` not raised, `*` not in this
+tissue's panel, `~` the species' literature also ties the gene to the named page
+candidate(s)), `panel`, `sentences`, and `versus_identity`: the two names against each
+other -- `only_<identity>`, the genes this identity curates and the rival does not;
+`only_<rival>`, the reverse; `both`, the genes both curate -- each as measured here, with
+`totals`. This is the fact [D3] is answered from. Read them: a gene can be this
+identity's raised marker AND the rival's defining one, and only the sentences say which
+of the two a publication uses it to define -- and where both curate it, neither.
+
+`program_reading` is an earlier menu-free reading of the cluster's genome-wide programs.
+Each identity-bearing program carries `lineage_specificity`: `one_lineage` (an antigen
+receptor, a lineage transcription-factor set, a structure one lineage builds -- what the
+cells ARE) or `several_lineages` (an effector or functional program more than one lineage
+runs -- what the cells DO).
+`program_genes_that_are_not_identity` pulls out of that reading the genes that cannot by
+themselves place the cluster in one lineage: `state` (cell cycle, interferon, stress) and
+`several_lineages`. `cluster_top_enriched` is the page the reading was made from.
+
+# Reading the panel
+
+{{PANEL_READING}}
+
+# Rules
+
+[D1] `own_program` answers ONE question: does this identity's lineage occupy these cells?
+It is read from the identity's REPLICATED definers -- rows with `n_pub` at least 2 whose
+sentences use the gene to define this identity rather than report it alongside -- less
+any gene under `state` in `program_genes_that_are_not_identity`, and less any gene shared
+with a `different_lineage` rival on this page (in `both` of that pair). A gene shared with
+the identity's coarser parent, finer child, sibling or pole is STILL its own for this
+question: those names are members of one lineage, and a program its members share is the
+lineage's program, present in these cells whichever member's name the row carries.
+Whether that shared program can tell this identity from a sibling or a pole is [D3]'s
+question and does not lower `own_program`. From what those genes do here:
+  - `dominant`: the own replicated definers are detected in most of the cluster's cells
+    or are its sharpest separators.
+  - `minority`: they are real but confined to a minority of cells while another program
+    occupies the rest.
+  - `absent`: they are unraised or near zero here, and where the dataset has them at all
+    they peak in OTHER clusters.
+  - `single_study_only`: only `n_pub` 1 rows carry the identity; the replicated definers
+    are absent or flat.
+A program the reading marks `several_lineages` counts toward `dominant` where the
+lineages that run it on this page are this identity's own family -- for a terminally
+differentiated cell whose whole identity is such a program, that program IS the lineage's
+program, however many of its siblings and poles the page holds. It decides nothing between those siblings and poles
+([D3]), and it does not count against a `different_lineage` rival that also runs it. If
+every carried definer this identity's `own_program` would rest on is shared with a
+`different_lineage` rival or is a state gene, that program is not `dominant` here however
+high the numbers read; say in `reason` that the identity's own lineage genes are what is
+missing. One famous gene dropping out while independent own definers are majority is
+dropout, not absence. A definer flat inside AND outside because the identity dominates
+the whole dataset is not absence ([R2]).
+
+[D2] `relation` -- one line per rival, and every rival in the packet needs one. What does
+the rival's NAME stand to this one, read from the two strings and from the two sides'
+measured definers, never from any classification of the vocabulary:
+  - `coarser_parent`: the rival is the plainer lineage this name sits inside (alveolar
+    macrophage / macrophage; alveolar type 1 cell / epithelial cell). The parent's genes
+    being present here is what a parent means, not evidence against the child. The
+    general, mature or adult form of a lineage stands as parent to its regional,
+    organ-resident, chamber, zonal, segmental or functional subtypes (cardiomyocyte /
+    atrial cardiomyocyte; endothelial cell / capillary endothelial cell): those are not
+    two poles.
+  - `finer_child`: the rival is a subtype, stage, zone, organ-resident form or activation
+    WITHIN this name.
+  - `sibling_or_pole`: two names at the same level whose programs are neighbours or the
+    two ends of one continuum -- NK and T cell, progenitor and mature, pericyte and
+    vascular smooth muscle, basal and luminal, monocyte and macrophage, capillary and
+    venous endothelium. Either could be delivered for this cluster and they are not each
+    other's parent.
+  - `different_lineage`: unrelated identities (a lymphoid receptor program and an
+    epithelial one). Two names that share a broad tissue class but stand for the
+    specialised lineages of different organs are different lineages, not two poles:
+    a shared tissue class is not a continuum.
+  - `state_label`: the rival's name describes what cells are DOING rather than what they
+    are -- proliferating, cycling, dividing, activated, inflammatory, interferon-stimulated,
+    stressed, transitional -- OR the rival's only separating genes here are state genes
+    (cell cycle, interferon, stress) while its lineage genes are not detected. A state is
+    not an identity ([R9]/[E6]) and cannot take a cluster from one.
+
+[D3] `whose_program_occupies` -- for that same pair, whose OWN defining program these
+cells run. Read each side from ITS OWN genes (its `only_` list in `versus_identity`, less
+any state gene and less any several-lineage program both sides run) and ITS OWN
+sentences. A gene both
+sides curate decides nothing for either; a several-lineage program both lineages run
+decides nothing between them however many cells carry it; a longer panel is not an
+argument; a study having named a cluster by a shared gene is not an argument.
+  - `identity_only`: this identity's own lineage genes are detected at cluster level and
+    the rival's own lineage genes are not (the rival has only shared, state or
+    several-lineage genes here, or its own genes sit near zero and peak elsewhere).
+  - `rival_only`: the reverse -- the rival's own lineage genes occupy these cells and
+    this identity's do not.
+  - `both_cluster_level`: each side's OWN lineage genes are carried by a substantial,
+    coherent part of the cluster. For a `sibling_or_pole` or `different_lineage` pair this
+    says the cluster holds two programs; for a `coarser_parent` pair it is the ordinary
+    case and says nothing against either name.
+  - `both_minority`: neither side's own genes reach beyond a small minority.
+  - `neither`: the pair cannot be told apart by any gene in this packet -- the program
+    these cells run belongs to both names and neither side's own genes are here. Say so
+    plainly: this reading is how a pole that the rows do not reach is kept from being
+    delivered as if they did.
+Put the genes that separate THIS identity from that rival in `separating_genes`, the ones
+that separate the RIVAL from this identity in `rival_separating_genes`, and the measured
+percentages of both in `note`. A gene under `shared` between the two may appear in
+neither list.
+
+[D4] Every gene you name must appear in this packet with its measured numbers, and both
+`note` and `reason` must quote those numbers. Invent nothing.
+
+# Answering
+
+{"identity":"<exact name>",
+"own_program":"dominant|minority|absent|single_study_only",
+"definers_present":["GENE",...],
+"definers_absent":["GENE",...],
+"rivals_read":[{"rival":"<exact rival name from this packet>","relation":"coarser_parent|finer_child|sibling_or_pole|different_lineage|state_label","whose_program_occupies":"identity_only|rival_only|both_cluster_level|both_minority|neither","separating_genes":["GENE",...],"rival_separating_genes":["GENE",...],"note":"<both sides' measured percentages>"}],
+"reason":"<the measured percentages of the definers named, what the sentences claim for them, which of them are this identity's own against its pole rivals, and why the readings follow>"}
+
+EVIDENCE_PACKET_JSON={{EVIDENCE_PACKET_JSON}}

@@ -1,0 +1,48 @@
+[R1] A marker is RAISED here when `avg_log2FC > 0` AND `auc > 0.5`. Both, not either:
+`avg_log2FC` is a MEAN over every cell in the group, including the ones that do not
+express the gene, so a handful of extremely high cells can pull it positive even while
+most of the distribution points the other way; `auc` is the rank-based version of the same
+comparison and cannot be moved by a few cells the way a mean can. Where they disagree --
+a positive `avg_log2FC` with `auc <= 0.5` -- trust `auc`: the gene is not raised, whatever
+the mean says. `significant` is a stricter and separate statement built on the same two
+numbers: the row clears all four of `avg_log2FC` above 0.25, `pct_in` above 10, `auc`
+above 0.5, and an adjusted p-value below 0.05. A row can be raised without being
+significant, and a row can be significant while carrying little weight for an identity
+many cell types share the gene with.
+
+[R1b] `auc` reads the whole expression distribution, not a detection threshold, so it
+tells apart a gene truly concentrated at high levels in a MINORITY of the cluster's cells
+(auc still above 0.5, because most in-cells outrank most out-cells even though few of them
+individually cross a detection cutoff) from a gene whose apparent rise is really a handful
+of outliers dragging a mean upward while the bulk of the cluster ranks no higher than the
+rest of the tissue (auc at or below 0.5). The second shape is not evidence for the
+identity, however large its `avg_log2FC`.
+
+[R2] An unraised marker means one of two different things, and `pct_in` tells them
+apart. Unraised with `pct_in` near zero is evidence AGAINST the identity: the cells do
+not express what the resource says defines it. Unraised with a high `pct_in` and a
+similarly high `pct_out` is not evidence against it; a cell type that makes up much of
+the dataset drives its own defining markers to a flat fold change, because the
+comparison is against the rest of the same tissue.
+
+[R3] Panel rows are ordered by `auc`, the most separating row first. `n_pub` is a fact
+on each row, not its rank: it says how often a pairing has been REPORTED, it does not rank
+identities against each other, and it is not a measure of how essential a gene is to an
+identity -- a heavily reported marker is frequently one the neighbouring cell types also
+express, which is why `specificity` is a separate column and why the most-published
+marker of an identity is often its most famous rather than its most reliable. Weigh each
+gene by what it does in these cells and by what its sentence actually claims for it.
+
+[R3b] `n_pub` = 1 is a single-study pairing: one paper once wrote the gene next to the
+cell-type name. Read such a row, and any sentence marked `single_study`, as one study's
+observation rather than as the field's definition, and give it correspondingly little
+weight against a replicated row that points the other way. It is not nothing -- a
+replicated panel is corroborated, not contradicted, by a single-study marker that agrees
+with it -- but an identity, a refinement or a qualifier resting on single-study pairings
+alone rests on one laboratory's finding.
+
+[R3c] What a sentence says matters as much as that it exists. A gene the literature uses
+to DEFINE an identity separates it. A gene appearing only as a control, as one comparison
+inside a single analysis, as a marker of a different state of the same lineage, or in a
+list of things the authors also measured, does not separate it -- whatever its detection
+here, and whatever its publication count.
